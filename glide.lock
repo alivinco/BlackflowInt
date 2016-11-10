@@ -1,0 +1,20 @@
+hash: b5494a79592acbb01c2294ea5af5fa238765350dcf8d4b1285d8757693972124
+updated: 2016-11-07T15:36:49.399805027+01:00
+imports:
+- name: github.com/alivinco/iotmsglibgo
+  version: ea3086694b54a1f611779f96f3fba3d6644cf89b
+  subpackages:
+  - json-types
+- name: github.com/eclipse/paho.mqtt.golang
+  version: 45f9b18f4864c81d49c3ed01e5faec9eeb05de31
+  subpackages:
+  - packets
+- name: github.com/influxdata/influxdb
+  version: 40f626d20fd60125ceb726b11a4a56197ef9ff9a
+  subpackages:
+  - client/v2
+- name: github.com/satori/go.uuid
+  version: b061729afc07e77a8aa4fad0a2fd840958f1942a
+- name: github.com/Sirupsen/logrus
+  version: d26492970760ca5d33129d2d799e34be5c4782eb
+testImports: []

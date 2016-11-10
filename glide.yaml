@@ -1,0 +1,13 @@
+package: .
+ignore:
+- golang.org/x/net
+- golang.org/x/sys
+import:
+- package: github.com/eclipse/paho.mqtt.golang
+  version: v1.0.0
+- package: github.com/alivinco/iotmsglibgo
+- package: github.com/Sirupsen/logrus
+  version: v0.11.0
+- package: github.com/influxdata/influxdb
+  subpackages:
+  - client/v2
