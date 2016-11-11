@@ -76,7 +76,7 @@ func (pr *Process) Init() error {
 // The code is executed in callers goroutine
 func (pr *Process) OnMessage(topic string, iotMsg *iotmsg.IotMsg, domain string) {
 	log.Debugf("New msg of class = %s", iotMsg.Class)
-	if pr.filter(topic, iotMsg) {
+	if pr.filter(topic, iotMsg, domain, 0) {
 		msg, err := pr.transform(topic, iotMsg, domain)
 		if err != nil {
 			log.Errorf("Transformation error: %s", err)
@@ -94,8 +94,67 @@ func (pr *Process) OnMessage(topic string, iotMsg *iotmsg.IotMsg, domain string)
 }
 
 // Filter - transforms IotMsg into DB compatable struct
-func (pr *Process) filter(topic string, iotMsg *iotmsg.IotMsg) bool {
-	return true
+func (pr *Process) filter(topic string, iotMsg *iotmsg.IotMsg, domain string, filterID int) bool {
+	var result bool
+	for _, filter := range pr.filters {
+		if (filterID == 0 && filter.IsAtomic) || filter.ID == filterID {
+
+			result = true
+			//////////////////////////////////////////////////////////
+			if filter.Topic != "" {
+				if topic != filter.Topic {
+					result = false
+				}
+			}
+			if filter.Domain != "" {
+				if domain != filter.Domain {
+					result = false
+				}
+			}
+			if filter.MsgType != "" {
+				if MapIotMsgType(iotMsg.Type) != filter.MsgType {
+					result = false
+				}
+			}
+			if filter.MsgClass != "" {
+				if iotMsg.Class != filter.MsgClass {
+					result = false
+				}
+			}
+			if filter.MsgSubClass != "" {
+				if iotMsg.SubClass != filter.MsgSubClass {
+					result = false
+				}
+			}
+
+			////////////////////////////////////////////////////////////
+			if filter.Negation {
+				result = !(result)
+			}
+			if filter.LinkedFilterID != 0 {
+				// filters chaining
+				nextResult := pr.filter(topic, iotMsg, domain, filter.LinkedFilterID)
+				switch filter.LinkedFilterBooleanOperation {
+				case "or":
+					result = result || nextResult
+				case "and":
+					result = result && nextResult
+
+				}
+			}
+			//////////////////////////////////////////////////////////////
+			if result {
+				log.Debugf("There is match with filter %+v", filter)
+				return true
+			}
+			if filterID != 0 {
+				break
+			}
+
+		}
+	}
+
+	return false
 }
 
 func (pr *Process) write(point *influx.Point) {
@@ -107,7 +166,8 @@ func (pr *Process) write(point *influx.Point) {
 	}
 }
 
-// Configure - configures the process and subscribes for all topics
+// Configure should be used to replace new set of filters and selectors with new set .
+// Process should be restarted after Configure call
 func (pr *Process) Configure(selectors []Selector, filters []Filter) {
 	pr.selectors = selectors
 	pr.filters = filters

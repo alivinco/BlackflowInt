@@ -16,12 +16,21 @@ type Selector struct {
 }
 
 // Filter defines message filter.
+// Emty string - means no filter.
 type Filter struct {
+	ID          int
+	Name        string
 	Topic       string
 	Domain      string
 	MsgType     string
 	MsgClass    string
 	MsgSubClass string
+	//
+	Negation bool
+	// Boolean operation between 2 filters , the value can one of : and , or
+	LinkedFilterBooleanOperation string
+	LinkedFilterID               int
+	IsAtomic                     bool
 }
 
 // Config process configuration

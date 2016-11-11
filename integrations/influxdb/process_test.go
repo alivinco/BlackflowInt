@@ -17,7 +17,7 @@ import (
 
 func Setup() {
 	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
-	log.SetLevel(log.InfoLevel)
+	log.SetLevel(log.DebugLevel)
 }
 
 func MsgGenerator(config Config, numberOfMsg int) {
@@ -68,7 +68,7 @@ func TestProcess(t *testing.T) {
 	Setup()
 	//Start container : docker run --name influxdb -d -p 8084:8083 -p 8086:8086 -v influxdb:/var/lib/influxdb influxdb:1.1.0-rc1-alpine
 	//Start mqtt broker
-	CountOfMessagesToSend := 10000
+	NumberOfMessagesToSend := 10000
 	config := Config{
 		MqttBrokerAddr:     "tcp://localhost:1883",
 		MqttBrokerUsername: "",
@@ -104,14 +104,82 @@ func TestProcess(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	go MsgGenerator(config, CountOfMessagesToSend)
+	go MsgGenerator(config, NumberOfMessagesToSend)
 
 	time.Sleep(time.Second * 5)
 	CountOfSavedEvents := Count(influxC, &config)
-	if CountOfMessagesToSend != CountOfSavedEvents {
-		t.Errorf("Count of sent messages doesn't match count of saved messages. Number of sent messages = %d , number of saved events = %d", CountOfMessagesToSend, CountOfSavedEvents)
+	if NumberOfMessagesToSend != CountOfSavedEvents {
+		t.Errorf("Number of sent messages doesn't match number of saved messages. Number of sent messages = %d , number of saved events = %d", NumberOfMessagesToSend, CountOfSavedEvents)
 	}
 	proc.Stop()
 	influxC.Close()
 
+}
+
+func TestFilter(t *testing.T) {
+	Setup()
+	filters := []Filter{
+		Filter{
+			Topic:    "jim1/cmd/test/1",
+			IsAtomic: true,
+		},
+		Filter{
+			MsgClass:    "binary",
+			MsgSubClass: "test",
+			IsAtomic:    true,
+		},
+		Filter{
+			MsgClass:                     "binary",
+			LinkedFilterID:               3,
+			LinkedFilterBooleanOperation: "and",
+			IsAtomic:                     true,
+		},
+		Filter{
+			ID:          3,
+			MsgSubClass: "lock",
+			IsAtomic:    false,
+		},
+	}
+	proc := NewProcess(nil, nil, filters)
+	msg := iotmsg.NewIotMsg(iotmsg.MsgTypeEvt, "sensor", "temperature", nil)
+	log.Info("Test #1")
+	if !proc.filter("jim1/cmd/test/1", msg, "", 0) {
+		t.Error("Topic check has to return true.")
+	}
+	log.Info("Test #2")
+	if proc.filter("jim1/cmd/test/2", msg, "", 0) {
+		t.Error("Topic check has to return false.")
+	}
+	log.Info("Test #3")
+	msg = iotmsg.NewIotMsg(iotmsg.MsgTypeEvt, "binary", "test", nil)
+	if !proc.filter("jim1/cmd/test/3", msg, "", 0) {
+		t.Error("Topic check has to return true.")
+	}
+	log.Info("Test #4")
+	msg = iotmsg.NewIotMsg(iotmsg.MsgTypeEvt, "binary", "lock", nil)
+	if !proc.filter("jim1/cmd/test/3", msg, "", 0) {
+		t.Error("Topic check has to return true.")
+	}
+	log.Info("Test #5")
+	filters = []Filter{
+		Filter{
+			Topic:    "jim1/cmd/test/1",
+			Negation: true,
+			IsAtomic: true,
+		},
+		Filter{
+			MsgClass:    "binary",
+			MsgSubClass: "test",
+			IsAtomic:    true,
+		},
+	}
+	proc = NewProcess(nil, nil, filters)
+	msg = iotmsg.NewIotMsg(iotmsg.MsgTypeEvt, "binary", "switch", nil)
+	if !proc.filter("jim1/cmd/test/3", msg, "", 0) {
+		t.Error("Topic check has to return true.")
+	}
+	log.Info("Test #6")
+	if proc.filter("jim1/cmd/test/1", msg, "", 0) {
+		t.Error("Topic check has to return false.")
+	}
 }
