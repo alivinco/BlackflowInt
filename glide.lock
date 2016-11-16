@@ -1,5 +1,5 @@
-hash: b5494a79592acbb01c2294ea5af5fa238765350dcf8d4b1285d8757693972124
-updated: 2016-11-07T15:36:49.399805027+01:00
+hash: bf33692502af72ce59b7f78698501ab4c59751326d4df00345acfc6c31431937
+updated: 2016-11-16T18:36:18.470699657+01:00
 imports:
 - name: github.com/alivinco/iotmsglibgo
   version: ea3086694b54a1f611779f96f3fba3d6644cf89b
@@ -10,9 +10,11 @@ imports:
   subpackages:
   - packets
 - name: github.com/influxdata/influxdb
-  version: 40f626d20fd60125ceb726b11a4a56197ef9ff9a
+  version: 4b9c88037fc5598267b8722d7ae4da6548b13663
   subpackages:
   - client/v2
+  - models
+  - pkg/escape
 - name: github.com/satori/go.uuid
   version: b061729afc07e77a8aa4fad0a2fd840958f1942a
 - name: github.com/Sirupsen/logrus
