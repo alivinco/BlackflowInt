@@ -25,9 +25,9 @@ type Filter struct {
 	MsgType     string
 	MsgClass    string
 	MsgSubClass string
-	//
+	// If true then returns everythin except matching value
 	Negation bool
-	// Boolean operation between 2 filters , the value can one of : and , or
+	// Boolean operation between 2 filters , supported values : and , or
 	LinkedFilterBooleanOperation string
 	LinkedFilterID               int
 	IsAtomic                     bool
@@ -43,6 +43,7 @@ type Config struct {
 	InfluxUsername     string
 	InfluxPassword     string
 	InfluxDB           string
+	StorageLocation    string
 	// DataPoints are saved in batches .
 	// Batch is sent to DB once it reaches BatchMaxSize or SaveInterval .
 	// depends on what comes first .

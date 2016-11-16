@@ -106,7 +106,7 @@ func TestProcess(t *testing.T) {
 	}
 	go MsgGenerator(config, NumberOfMessagesToSend)
 
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 10)
 	CountOfSavedEvents := Count(influxC, &config)
 	if NumberOfMessagesToSend != CountOfSavedEvents {
 		t.Errorf("Number of sent messages doesn't match number of saved messages. Number of sent messages = %d , number of saved events = %d", NumberOfMessagesToSend, CountOfSavedEvents)
@@ -120,15 +120,18 @@ func TestFilter(t *testing.T) {
 	Setup()
 	filters := []Filter{
 		Filter{
+			ID:       1,
 			Topic:    "jim1/cmd/test/1",
 			IsAtomic: true,
 		},
 		Filter{
+			ID:          2,
 			MsgClass:    "binary",
 			MsgSubClass: "test",
 			IsAtomic:    true,
 		},
 		Filter{
+			ID:                           4,
 			MsgClass:                     "binary",
 			LinkedFilterID:               3,
 			LinkedFilterBooleanOperation: "and",
@@ -163,11 +166,13 @@ func TestFilter(t *testing.T) {
 	log.Info("Test #5")
 	filters = []Filter{
 		Filter{
+			ID:       1,
 			Topic:    "jim1/cmd/test/1",
 			Negation: true,
 			IsAtomic: true,
 		},
 		Filter{
+			ID:          2,
 			MsgClass:    "binary",
 			MsgSubClass: "test",
 			IsAtomic:    true,
@@ -182,4 +187,34 @@ func TestFilter(t *testing.T) {
 	if proc.filter("jim1/cmd/test/1", msg, "", 0) {
 		t.Error("Topic check has to return false.")
 	}
+	log.Info("Test #7 Add filter")
+
+	filters = []Filter{
+		Filter{
+			ID:       1,
+			Topic:    "jim1/cmd/test/1",
+			IsAtomic: true,
+		},
+		Filter{
+			ID:          2,
+			MsgClass:    "binary",
+			MsgSubClass: "test",
+			IsAtomic:    true,
+		},
+	}
+	proc = NewProcess(nil, nil, filters)
+	msg = iotmsg.NewIotMsg(iotmsg.MsgTypeEvt, "test", "filter", nil)
+	if proc.filter("jim/cmd/test/addfilter", msg, "", 0) {
+		t.Error("Topic check has to return False.")
+	}
+	newID := proc.AddFilter(Filter{IsAtomic: true, Topic: "jim/cmd/test/addfilter"})
+	t.Logf("New filter ID = %d", newID)
+	if !proc.filter("jim/cmd/test/addfilter", msg, "", 0) {
+		t.Error("Topic check has to return true.")
+	}
+	proc.RemoveFilter(newID)
+	if proc.filter("jim/cmd/test/addfilter", msg, "", 0) {
+		t.Error("Topic check has to return False.")
+	}
+	// proc.RemoveFilter
 }

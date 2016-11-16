@@ -1,14 +1,11 @@
 package influxdb
 
 import (
+	"fmt"
+	"sync"
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-
-	"sync"
-
-	"fmt"
-
 	"github.com/alivinco/blackflowint/adapters"
 	iotmsg "github.com/alivinco/iotmsglibgo"
 	influx "github.com/influxdata/influxdb/client/v2"
@@ -25,6 +22,7 @@ type Process struct {
 	batchPoints influx.BatchPoints
 	ticker      *time.Ticker
 	writeMutex  *sync.Mutex
+	apiMutex    *sync.Mutex
 	transform   Transform
 }
 
@@ -69,6 +67,7 @@ func (pr *Process) Init() error {
 	log.Info("Initialization completed.")
 
 	pr.writeMutex = &sync.Mutex{}
+	pr.apiMutex = &sync.Mutex{}
 	return nil
 }
 
