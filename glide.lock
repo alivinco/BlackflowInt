@@ -1,5 +1,5 @@
-hash: bf33692502af72ce59b7f78698501ab4c59751326d4df00345acfc6c31431937
-updated: 2016-11-16T18:36:18.470699657+01:00
+hash: 68d5363e03ee5b3fa8d31d3c47693a2bcf74d3863dd88b0e83904e18873e312b
+updated: 2016-11-16T18:57:58.890923222+01:00
 imports:
 - name: github.com/alivinco/iotmsglibgo
   version: ea3086694b54a1f611779f96f3fba3d6644cf89b
@@ -15,8 +15,44 @@ imports:
   - client/v2
   - models
   - pkg/escape
+- name: github.com/labstack/echo
+  version: f9e97332f3bebd2c26753f7dc679588a22cb387d
+- name: github.com/labstack/gommon
+  version: 2d272df536d051e737aea353b86c979d6e88bce0
+  subpackages:
+  - color
+  - log
+- name: github.com/mattn/go-colorable
+  version: d228849504861217f796da67fae4f6e347643f15
+- name: github.com/mattn/go-isatty
+  version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
+- name: github.com/miekg/dns
+  version: 58f52c57ce9df13460ac68200cef30a008b9c468
+- name: github.com/rsc/letsencrypt
+  version: 76104d26167d38b6a0010f42bfc8ec5487742e8b
 - name: github.com/satori/go.uuid
   version: b061729afc07e77a8aa4fad0a2fd840958f1942a
 - name: github.com/Sirupsen/logrus
   version: d26492970760ca5d33129d2d799e34be5c4782eb
+- name: github.com/tylerb/graceful
+  version: 50a48b6e73fcc75b45e22c05b79629a67c79e938
+- name: github.com/valyala/fasttemplate
+  version: 3b874956e03f1636d171bda64b130f9135f42cff
+- name: github.com/xenolf/lego
+  version: 9f86882f775f75f69617ecc160e39f4e0b7ae27f
+  subpackages:
+  - acme
+- name: golang.org/x/crypto
+  version: 9477e0b78b9ac3d0b03822fd95422e2fe07627cd
+  subpackages:
+  - ocsp
+- name: golang.org/x/time
+  version: f51c12702a4d776e4c1fa9b0fabab841babae631
+  subpackages:
+  - rate
+- name: gopkg.in/square/go-jose.v1
+  version: aa2e30fdd1fe9dd3394119af66451ae790d50e0d
+  subpackages:
+  - cipher
+  - json
 testImports: []

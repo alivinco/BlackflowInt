@@ -22,7 +22,7 @@
       \|/ 
 ---------------             --------------          ----------------        --------------           ------------
 |             |             |            |          |              |        |   Batch    |           |          | 
-| MQTT broker | ---MSG----> |  Filters   | --MSG--> |  Tag event   |--MSG-->| aggregator |---BATCH-->| InfluxDB |
+| MQTT broker | ---MSG----> |  Filters   | --MSG--> |  Tag msg     |--MSG-->| aggregator |---BATCH-->| InfluxDB |
 |             |             |            |          |              |        |            |           |          |
 ---------------             --------------          ----------------        --------------           ------------
 
