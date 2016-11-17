@@ -29,6 +29,8 @@ type Process struct {
 // NewProcess is a constructor
 func NewProcess(config *ProcessConfig, selectors []Selector, filters []Filter) *Process {
 	proc := Process{Config: config, selectors: selectors, filters: filters, transform: DefaultTransform}
+	proc.writeMutex = &sync.Mutex{}
+	proc.apiMutex = &sync.Mutex{}
 	return &proc
 }
 
@@ -66,8 +68,6 @@ func (pr *Process) Init() error {
 	pr.mqttAdapter.SetMessageHandler(pr.OnMessage)
 	log.Info("Initialization completed.")
 
-	pr.writeMutex = &sync.Mutex{}
-	pr.apiMutex = &sync.Mutex{}
 	return nil
 }
 
@@ -93,10 +93,10 @@ func (pr *Process) OnMessage(topic string, iotMsg *iotmsg.IotMsg, domain string)
 }
 
 // Filter - transforms IotMsg into DB compatable struct
-func (pr *Process) filter(topic string, iotMsg *iotmsg.IotMsg, domain string, filterID int) bool {
+func (pr *Process) filter(topic string, iotMsg *iotmsg.IotMsg, domain string, filterID IDt) bool {
 	var result bool
 	for _, filter := range pr.filters {
-		if (filterID == 0 && filter.IsAtomic) || filter.ID == filterID {
+		if (filter.IsAtomic && filterID == 0) || (filter.ID == filterID) {
 
 			result = true
 			//////////////////////////////////////////////////////////
@@ -132,7 +132,9 @@ func (pr *Process) filter(topic string, iotMsg *iotmsg.IotMsg, domain string, fi
 			}
 			if filter.LinkedFilterID != 0 {
 				// filters chaining
+				// log.Debug("Starting recursion. Current result = ", result)
 				nextResult := pr.filter(topic, iotMsg, domain, filter.LinkedFilterID)
+				// log.Debug("Nested call returned ", nextResult)
 				switch filter.LinkedFilterBooleanOperation {
 				case "or":
 					result = result || nextResult
@@ -143,7 +145,7 @@ func (pr *Process) filter(topic string, iotMsg *iotmsg.IotMsg, domain string, fi
 			}
 			//////////////////////////////////////////////////////////////
 			if result {
-				log.Debugf("There is match with filter %+v", filter)
+				// log.Debugf("There is match with filter %+v", filter)
 				return true
 			}
 			if filterID != 0 {

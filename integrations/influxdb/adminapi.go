@@ -1,26 +1,18 @@
 package influxdb
 
 // AddFilter adds new filter entry
-func (pr *Process) AddFilter(filter Filter) int {
+func (pr *Process) AddFilter(filter Filter) IDt {
 	defer func() {
 		pr.apiMutex.Unlock()
 	}()
 	pr.apiMutex.Lock()
-	var newID int
-	for _, f := range pr.filters {
-		if f.ID > newID {
-			newID = f.ID
-		}
-	}
-
-	newID++
-	filter.ID = newID
+	filter.ID = GetNewID(pr.filters)
 	pr.filters = append(pr.filters, filter)
-	return newID
+	return filter.ID
 }
 
 // RemoveFilter removes 1 filter entry by ID
-func (pr *Process) RemoveFilter(ID int) {
+func (pr *Process) RemoveFilter(ID IDt) {
 	defer func() {
 		pr.apiMutex.Unlock()
 	}()

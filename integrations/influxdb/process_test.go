@@ -42,9 +42,9 @@ func MsgGenerator(config ProcessConfig, numberOfMsg int) {
 
 func CleanUpDB(influxC influx.Client, config *ProcessConfig) {
 	// Delete measurments
-	q := influx.NewQuery(fmt.Sprintf("DELETE from sensors"), config.InfluxDB, "")
+	q := influx.NewQuery(fmt.Sprintf("DROP MEASUREMENT sensors"), config.InfluxDB, "")
 	if response, err := influxC.Query(q); err == nil && response.Error() == nil {
-		log.Infof("Datebase was created with status :", response.Results)
+		log.Info("Datebase was deleted with status :", response.Results)
 
 	}
 
@@ -53,13 +53,18 @@ func CleanUpDB(influxC influx.Client, config *ProcessConfig) {
 func Count(influxC influx.Client, config *ProcessConfig) int {
 	q := influx.NewQuery(fmt.Sprintf("select count(value) from sensors"), config.InfluxDB, "")
 	if response, err := influxC.Query(q); err == nil && response.Error() == nil {
-		countN, ok := response.Results[0].Series[0].Values[0][1].(json.Number)
-		count, _ := countN.Int64()
-		if !ok {
-			log.Errorf("Type assertion failed , type is = %s", reflect.TypeOf(response.Results[0].Series[0].Values[0][1]))
+		if len(response.Results[0].Series) > 0 {
+			countN, ok := response.Results[0].Series[0].Values[0][1].(json.Number)
+			count, _ := countN.Int64()
+			if !ok {
+				log.Errorf("Type assertion failed , type is = %s", reflect.TypeOf(response.Results[0].Series[0].Values[0][1]))
+			}
+			log.Info("Number of received messages = ", count)
+			return int(count)
 		}
-		log.Info("Number of received messages = ", count)
-		return int(count)
+		log.Error("No Results")
+		return 0
+
 	}
 	return 0
 }
@@ -68,7 +73,7 @@ func TestProcess(t *testing.T) {
 	Setup()
 	//Start container : docker run --name influxdb -d -p 8084:8083 -p 8086:8086 -v influxdb:/var/lib/influxdb influxdb:1.1.0-rc1-alpine
 	//Start mqtt broker
-	NumberOfMessagesToSend := 10000
+	NumberOfMessagesToSend := 1000
 	config := ProcessConfig{
 		MqttBrokerAddr:     "tcp://localhost:1883",
 		MqttBrokerUsername: "",
@@ -87,6 +92,18 @@ func TestProcess(t *testing.T) {
 		Selector{Topic: "testDomain/jim1/evt/zw/4/sen_temp/1"},
 		Selector{Topic: "testDomain/jim1/evt/zw/3/bin_switch/1"},
 	}
+	filters := []Filter{
+		Filter{
+			ID:       1,
+			MsgClass: "sensor",
+			IsAtomic: true,
+		},
+		Filter{
+			ID:       2,
+			MsgClass: "binary",
+			IsAtomic: true,
+		},
+	}
 
 	influxC, err := influx.NewHTTPClient(influx.HTTPConfig{
 		Addr:     config.InfluxAddr, //"http://localhost:8086",
@@ -98,15 +115,14 @@ func TestProcess(t *testing.T) {
 	}
 
 	CleanUpDB(influxC, &config)
-	filters := []Filter{}
 	proc := NewProcess(&config, selector, filters)
 	err = proc.Start()
 	if err != nil {
 		t.Fatal(err)
 	}
-	go MsgGenerator(config, NumberOfMessagesToSend)
+	MsgGenerator(config, NumberOfMessagesToSend)
 
-	time.Sleep(time.Second * 10)
+	// time.Sleep(time.Second * 10)
 	CountOfSavedEvents := Count(influxC, &config)
 	if NumberOfMessagesToSend != CountOfSavedEvents {
 		t.Errorf("Number of sent messages doesn't match number of saved messages. Number of sent messages = %d , number of saved events = %d", NumberOfMessagesToSend, CountOfSavedEvents)

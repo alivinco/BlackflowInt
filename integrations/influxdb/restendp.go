@@ -1,11 +1,10 @@
 package influxdb
 
 import "github.com/labstack/echo"
-import "net/http"
 
 type ProcessApiRestEndp struct {
-	Process *Process
-	Echo    *echo.Echo
+	Processes []Process
+	Echo      *echo.Echo
 }
 
 func (endp *ProcessApiRestEndp) SetupRouts() {
@@ -24,7 +23,9 @@ func (endp *ProcessApiRestEndp) RemoveFilterEndpoint(c echo.Context) error {
 	return nil
 }
 func (endp *ProcessApiRestEndp) GetFiltersEndpoint(c echo.Context) error {
-	return c.JSON(http.StatusCreated, endp.Process.GetFilters())
+
+	// return c.JSON(http.StatusCreated, endp.Process.GetFilters())
+	return nil
 }
 func (endp *ProcessApiRestEndp) GetSelectorsEndpoint(c echo.Context) error {
 	return nil
