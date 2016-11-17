@@ -8,9 +8,9 @@
 
 
 
-#### MQTT event stream dump into InfluxDB
+### MQTT event stream dump into InfluxDB
 
-**Event processing pipeline** : 
+**Message processing pipeline** : 
 ````
 
 
@@ -25,6 +25,49 @@
 | MQTT broker | ---MSG----> |  Filters   | --MSG--> |  Tag msg     |--MSG-->| aggregator |---BATCH-->| InfluxDB |
 |             |             |            |          |              |        |            |           |          |
 ---------------             --------------          ----------------        --------------           ------------
+
+````
+
+**Process configuration**
+
+````                      
+
+                          -----------------------------------
+                          | ProcessConfig,Selectors,Filters | 
+                          -----------------------------------  
+                               |
+                              \|/ 
+----------------         ------------------------          -------------
+| MQTT broker  |-------->| Process A instance 1 |--------->| InfluxDB  | 
+|              |         |                      |          |           |
+----------------         ------------------------          -------------
+
+                          -----------------------------------
+                          | ProcessConfig,Selectors,Filters | 
+                          -----------------------------------
+                               |
+                              \|/ 
+----------------         ------------------------          -------------
+| MQTT broker  |-------->| Process A instance 2 |--------->| InfluxDB  | 
+|              |         |                      |          |           |
+----------------         ------------------------          -------------
+
+````
+Configuration data model :
+
+````
+
+   --------------------------                                               
+   |     ProcessConfig      |
+   |________________________|
+     |                 |
+    /|\               /|\
+-------------    ------------ 
+| Selectors |    |  Filters | 
+-------------    ------------ 
+                    |    /|\
+                    |     |
+                    -------
 
 ````  
 
@@ -59,3 +102,32 @@ type Selector struct {
 Tags : 
  TODO 
 
+Process config :
+
+```
+type ProcessConfig struct {
+	ID                 string
+	MqttBrokerAddr     string
+	MqttClientID       string
+	MqttBrokerUsername string
+	MqttBrokerPassword string
+	InfluxAddr         string
+	InfluxUsername     string
+	InfluxPassword     string
+	InfluxDB           string
+	// DataPoints are saved in batches .
+	// Batch is sent to DB once it reaches BatchMaxSize or SaveInterval .
+	// depends on what comes first .
+	BatchMaxSize int
+	// Interval in miliseconds
+	SaveInterval time.Duration
+}
+
+```
+
+Application config :
+
+```
+
+
+```

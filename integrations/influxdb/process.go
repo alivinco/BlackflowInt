@@ -18,7 +18,7 @@ type Process struct {
 	influxC     influx.Client
 	selectors   []Selector
 	filters     []Filter
-	Config      *Config
+	Config      *ProcessConfig
 	batchPoints influx.BatchPoints
 	ticker      *time.Ticker
 	writeMutex  *sync.Mutex
@@ -27,7 +27,7 @@ type Process struct {
 }
 
 // NewProcess is a constructor
-func NewProcess(config *Config, selectors []Selector, filters []Filter) *Process {
+func NewProcess(config *ProcessConfig, selectors []Selector, filters []Filter) *Process {
 	proc := Process{Config: config, selectors: selectors, filters: filters, transform: DefaultTransform}
 	return &proc
 }

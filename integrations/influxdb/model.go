@@ -12,13 +12,16 @@ type Transform func(topic string, iotMsg *iotmsglibgo.IotMsg, domain string) (*i
 
 // Selector defines message selector.
 type Selector struct {
-	Topic string
+	ID        int
+	ProcessID string
+	Topic     string
 }
 
 // Filter defines message filter.
 // Emty string - means no filter.
 type Filter struct {
 	ID          int
+	ProcessID   string
 	Name        string
 	Topic       string
 	Domain      string
@@ -33,8 +36,10 @@ type Filter struct {
 	IsAtomic                     bool
 }
 
-// Config process configuration
-type Config struct {
+// ProcessConfig process configuration
+type ProcessConfig struct {
+	ID                 int
+	Name               string
 	MqttBrokerAddr     string
 	MqttClientID       string
 	MqttBrokerUsername string
@@ -43,7 +48,6 @@ type Config struct {
 	InfluxUsername     string
 	InfluxPassword     string
 	InfluxDB           string
-	StorageLocation    string
 	// DataPoints are saved in batches .
 	// Batch is sent to DB once it reaches BatchMaxSize or SaveInterval .
 	// depends on what comes first .

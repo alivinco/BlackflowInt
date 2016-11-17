@@ -1,22 +1,37 @@
 package influxdb
 
+import "github.com/labstack/echo"
 import "net/http"
 
-func AddFilterEndpoint(w http.ResponseWriter, req *http.Request) {
-
+type ProcessApiRestEndp struct {
+	Process *Process
+	Echo    *echo.Echo
 }
-func RemoveFilterEndpoint(w http.ResponseWriter, req *http.Request) {
 
+func (endp *ProcessApiRestEndp) SetupRouts() {
+	endp.Echo.GET("/blackflowint/influxdb/api/filters", endp.GetFiltersEndpoint)
+	endp.Echo.GET("/blackflowint/influxdb/api/selectors", endp.GetSelectorsEndpoint)
+	endp.Echo.PUT("/blackflowint/influxdb/api/selectors", endp.AddSelectorEndpoint)
+	endp.Echo.DELETE("/blackflowint/influxdb/api/selectors", endp.RemoveSelectorEndpoint)
+	endp.Echo.PUT("/blackflowint/influxdb/api/filters", endp.AddFilterEndpoint)
+	endp.Echo.DELETE("/blackflowint/influxdb/api/filters/:id", endp.RemoveFilterEndpoint)
 }
-func GetFiltersEndpoint(w http.ResponseWriter, req *http.Request) {
 
+func (endp *ProcessApiRestEndp) AddFilterEndpoint(c echo.Context) error {
+	return nil
 }
-func GetSelectorsEndpoint(w http.ResponseWriter, req *http.Request) {
-
+func (endp *ProcessApiRestEndp) RemoveFilterEndpoint(c echo.Context) error {
+	return nil
 }
-func AddSelectorEndpoint(w http.ResponseWriter, req *http.Request) {
-
+func (endp *ProcessApiRestEndp) GetFiltersEndpoint(c echo.Context) error {
+	return c.JSON(http.StatusCreated, endp.Process.GetFilters())
 }
-func RemoveSelectorEndpoint(w http.ResponseWriter, req *http.Request) {
-
+func (endp *ProcessApiRestEndp) GetSelectorsEndpoint(c echo.Context) error {
+	return nil
+}
+func (endp *ProcessApiRestEndp) AddSelectorEndpoint(c echo.Context) error {
+	return nil
+}
+func (endp *ProcessApiRestEndp) RemoveSelectorEndpoint(c echo.Context) error {
+	return nil
 }

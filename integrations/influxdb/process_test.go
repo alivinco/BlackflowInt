@@ -20,7 +20,7 @@ func Setup() {
 	log.SetLevel(log.DebugLevel)
 }
 
-func MsgGenerator(config Config, numberOfMsg int) {
+func MsgGenerator(config ProcessConfig, numberOfMsg int) {
 	r := rand.New(rand.NewSource(99))
 	topics := []string{
 		"jim1/evt/zw/2/sen_temp/1",
@@ -40,7 +40,7 @@ func MsgGenerator(config Config, numberOfMsg int) {
 
 }
 
-func CleanUpDB(influxC influx.Client, config *Config) {
+func CleanUpDB(influxC influx.Client, config *ProcessConfig) {
 	// Delete measurments
 	q := influx.NewQuery(fmt.Sprintf("DELETE from sensors"), config.InfluxDB, "")
 	if response, err := influxC.Query(q); err == nil && response.Error() == nil {
@@ -50,7 +50,7 @@ func CleanUpDB(influxC influx.Client, config *Config) {
 
 }
 
-func Count(influxC influx.Client, config *Config) int {
+func Count(influxC influx.Client, config *ProcessConfig) int {
 	q := influx.NewQuery(fmt.Sprintf("select count(value) from sensors"), config.InfluxDB, "")
 	if response, err := influxC.Query(q); err == nil && response.Error() == nil {
 		countN, ok := response.Results[0].Series[0].Values[0][1].(json.Number)
@@ -69,7 +69,7 @@ func TestProcess(t *testing.T) {
 	//Start container : docker run --name influxdb -d -p 8084:8083 -p 8086:8086 -v influxdb:/var/lib/influxdb influxdb:1.1.0-rc1-alpine
 	//Start mqtt broker
 	NumberOfMessagesToSend := 10000
-	config := Config{
+	config := ProcessConfig{
 		MqttBrokerAddr:     "tcp://localhost:1883",
 		MqttBrokerUsername: "",
 		MqttBrokerPassword: "",
