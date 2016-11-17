@@ -35,14 +35,14 @@ func (pr *Process) AddSelector(selector Selector) {
 }
 
 // RemoveSelector removes 1 selector entry
-func (pr *Process) RemoveSelector(selector *Selector) {
+func (pr *Process) RemoveSelector(ID IDt) {
 	defer func() {
 		pr.apiMutex.Unlock()
 	}()
 	pr.apiMutex.Lock()
-	pr.mqttAdapter.Unsubscribe(selector.Topic)
 	for i, s := range pr.selectors {
-		if s.Topic == selector.Topic {
+		if s.ID == ID {
+			pr.mqttAdapter.Unsubscribe(s.Topic)
 			pr.selectors = append(pr.selectors[:i], pr.selectors[i+1:]...)
 		}
 	}

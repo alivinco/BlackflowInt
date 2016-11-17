@@ -8,12 +8,14 @@ type ProcessApiRestEndp struct {
 }
 
 func (endp *ProcessApiRestEndp) SetupRouts() {
-	endp.Echo.GET("/blackflowint/influxdb/api/filters", endp.GetFiltersEndpoint)
-	endp.Echo.GET("/blackflowint/influxdb/api/selectors", endp.GetSelectorsEndpoint)
-	endp.Echo.PUT("/blackflowint/influxdb/api/selectors", endp.AddSelectorEndpoint)
-	endp.Echo.DELETE("/blackflowint/influxdb/api/selectors", endp.RemoveSelectorEndpoint)
-	endp.Echo.PUT("/blackflowint/influxdb/api/filters", endp.AddFilterEndpoint)
-	endp.Echo.DELETE("/blackflowint/influxdb/api/filters/:id", endp.RemoveFilterEndpoint)
+	endp.Echo.PUT("/blackflowint/influxdb/api/proc", endp.AddProcessEndpoint)
+	endp.Echo.POST("/blackflowint/influxdb/api/proc/ctl", endp.CtlProcessEndpoint)
+	endp.Echo.GET("/blackflowint/influxdb/api/proc/filters", endp.GetFiltersEndpoint)
+	endp.Echo.PUT("/blackflowint/influxdb/api/proc/filters", endp.AddFilterEndpoint)
+	endp.Echo.DELETE("/blackflowint/influxdb/api/proc/filters/:id", endp.RemoveFilterEndpoint)
+	endp.Echo.GET("/blackflowint/influxdb/api/proc/selectors", endp.GetSelectorsEndpoint)
+	endp.Echo.PUT("/blackflowint/influxdb/api/proc/selectors", endp.AddSelectorEndpoint)
+	endp.Echo.DELETE("/blackflowint/influxdb/api/proc/selectors/:id", endp.RemoveSelectorEndpoint)
 }
 
 func (endp *ProcessApiRestEndp) AddFilterEndpoint(c echo.Context) error {
@@ -23,7 +25,7 @@ func (endp *ProcessApiRestEndp) RemoveFilterEndpoint(c echo.Context) error {
 	return nil
 }
 func (endp *ProcessApiRestEndp) GetFiltersEndpoint(c echo.Context) error {
-
+	// resp := []Filter{}
 	// return c.JSON(http.StatusCreated, endp.Process.GetFilters())
 	return nil
 }
@@ -34,5 +36,14 @@ func (endp *ProcessApiRestEndp) AddSelectorEndpoint(c echo.Context) error {
 	return nil
 }
 func (endp *ProcessApiRestEndp) RemoveSelectorEndpoint(c echo.Context) error {
+	return nil
+}
+func (endp *ProcessApiRestEndp) CtlProcessEndpoint(c echo.Context) error {
+	return nil
+}
+func (endp *ProcessApiRestEndp) AddProcessEndpoint(c echo.Context) error {
+	return nil
+}
+func (endp *ProcessApiRestEndp) RemoveProcessEndpoint(c echo.Context) error {
 	return nil
 }

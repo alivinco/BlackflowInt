@@ -17,16 +17,14 @@ type IDt int
 
 // Selector defines message selector.
 type Selector struct {
-	ID        IDt
-	ProcessID IDt
-	Topic     string
+	ID    IDt
+	Topic string
 }
 
 // Filter defines message filter.
 // Emty string - means no filter.
 type Filter struct {
 	ID          IDt
-	ProcessID   IDt
 	Name        string
 	Topic       string
 	Domain      string
@@ -59,7 +57,12 @@ type ProcessConfig struct {
 	BatchMaxSize int
 	// Interval in miliseconds
 	SaveInterval time.Duration
+	Filters      []Filter
+	Selectors    []Selector
 }
+
+//ProcessConfigs is a collection of ProcessConfigs
+type ProcessConfigs []ProcessConfig
 
 // GetNewID returns new ID for any struct which implements CommonInt
 func GetNewID(dsi interface{}) IDt {
@@ -72,7 +75,6 @@ func GetNewID(dsi interface{}) IDt {
 				newID = id
 			}
 		}
-
 		newID++
 		return IDt(newID)
 	}

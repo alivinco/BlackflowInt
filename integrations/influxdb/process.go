@@ -24,6 +24,7 @@ type Process struct {
 	writeMutex  *sync.Mutex
 	apiMutex    *sync.Mutex
 	transform   Transform
+	State       string
 }
 
 // NewProcess is a constructor
@@ -227,6 +228,7 @@ func (pr *Process) Start() error {
 	for _, selector := range pr.selectors {
 		pr.mqttAdapter.Subscribe(selector.Topic, 0)
 	}
+	pr.State = "STARTED"
 	return nil
 
 }
@@ -241,5 +243,6 @@ func (pr *Process) Stop() {
 	}
 	pr.influxC.Close()
 	pr.mqttAdapter.Stop()
+	pr.State = "STOPPED"
 
 }
