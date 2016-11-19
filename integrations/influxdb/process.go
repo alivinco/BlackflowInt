@@ -16,8 +16,6 @@ import (
 type Process struct {
 	mqttAdapter *adapters.MqttAdapter
 	influxC     influx.Client
-	selectors   []Selector
-	filters     []Filter
 	Config      *ProcessConfig
 	batchPoints influx.BatchPoints
 	ticker      *time.Ticker
@@ -28,8 +26,8 @@ type Process struct {
 }
 
 // NewProcess is a constructor
-func NewProcess(config *ProcessConfig, selectors []Selector, filters []Filter) *Process {
-	proc := Process{Config: config, selectors: selectors, filters: filters, transform: DefaultTransform}
+func NewProcess(config *ProcessConfig) *Process {
+	proc := Process{Config: config, transform: DefaultTransform}
 	proc.writeMutex = &sync.Mutex{}
 	proc.apiMutex = &sync.Mutex{}
 	return &proc
@@ -62,12 +60,12 @@ func (pr *Process) Init() error {
 	if err != nil {
 		log.Fatalln("Error: ", err)
 	}
-	log.Info("Initialization completed.")
+	log.Info("DB initialization completed.")
 	log.Info("Initializing MQTT adapter.")
 	//"tcp://localhost:1883", "blackflowint", "", ""
 	pr.mqttAdapter = adapters.NewMqttAdapter(pr.Config.MqttBrokerAddr, pr.Config.MqttClientID, pr.Config.MqttBrokerUsername, pr.Config.MqttBrokerPassword)
 	pr.mqttAdapter.SetMessageHandler(pr.OnMessage)
-	log.Info("Initialization completed.")
+	log.Info("MQTT adapter initialization completed.")
 
 	return nil
 }
@@ -96,7 +94,7 @@ func (pr *Process) OnMessage(topic string, iotMsg *iotmsg.IotMsg, domain string)
 // Filter - transforms IotMsg into DB compatable struct
 func (pr *Process) filter(topic string, iotMsg *iotmsg.IotMsg, domain string, filterID IDt) bool {
 	var result bool
-	for _, filter := range pr.filters {
+	for _, filter := range pr.Config.Filters {
 		if (filter.IsAtomic && filterID == 0) || (filter.ID == filterID) {
 
 			result = true
@@ -171,8 +169,8 @@ func (pr *Process) write(point *influx.Point) {
 // Configure should be used to replace new set of filters and selectors with new set .
 // Process should be restarted after Configure call
 func (pr *Process) Configure(selectors []Selector, filters []Filter) {
-	pr.selectors = selectors
-	pr.filters = filters
+	pr.Config.Selectors = selectors
+	pr.Config.Filters = filters
 }
 
 // WriteIntoDb - inserts record into db
@@ -209,23 +207,18 @@ func (pr *Process) WriteIntoDb() {
 // Start starts the process by starting MQTT adapter ,
 // starting scheduler
 func (pr *Process) Start() error {
-	err := pr.Init()
-	if err != nil {
-		log.Fatalln("Initialization Error: ", err)
-		return err
-	}
 	pr.ticker = time.NewTicker(time.Millisecond * pr.Config.SaveInterval)
 	go func() {
 		for _ = range pr.ticker.C {
 			pr.WriteIntoDb()
 		}
 	}()
-	err = pr.mqttAdapter.Start()
+	err := pr.mqttAdapter.Start()
 	if err != nil {
 		log.Fatalln("Error: ", err)
 		return err
 	}
-	for _, selector := range pr.selectors {
+	for _, selector := range pr.Config.Selectors {
 		pr.mqttAdapter.Subscribe(selector.Topic, 0)
 	}
 	pr.State = "STARTED"
@@ -238,7 +231,7 @@ func (pr *Process) Start() error {
 func (pr *Process) Stop() {
 	pr.ticker.Stop()
 
-	for _, selector := range pr.selectors {
+	for _, selector := range pr.Config.Selectors {
 		pr.mqttAdapter.Unsubscribe(selector.Topic)
 	}
 	pr.influxC.Close()

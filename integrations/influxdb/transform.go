@@ -18,6 +18,8 @@ func DefaultTransform(topic string, iotMsg *iotmsg.IotMsg, domain string) (*infl
 		"type":   MapIotMsgType(iotMsg.Type),
 	}
 	var fields map[string]interface{}
+	var vInt int
+	var err error
 	switch iotMsg.Class {
 	case "sensor":
 		fields = map[string]interface{}{
@@ -25,13 +27,28 @@ func DefaultTransform(topic string, iotMsg *iotmsg.IotMsg, domain string) (*infl
 			"unit":  iotMsg.Default.Unit,
 		}
 		dpName = "sensors"
-    case "binary":
+		break
+	case "binary":
 		fields = map[string]interface{}{
 			"value": iotMsg.GetDefaultBool(),
 		}
-		dpName = "binary"    
+		dpName = "binary"
+		break
+	case "level":
+		vInt, err = iotMsg.GetDefaultInt()
+		if err != nil {
+			return nil, err
+		}
+		fields = map[string]interface{}{
+			"value": vInt,
+		}
+		dpName = "level"
+		break
 	default:
-		fields = nil
+		fields = map[string]interface{}{
+			"value": iotMsg.GetDefaultStr(),
+		}
+		dpName = "default"
 	}
 	if fields != nil {
 		point, _ := influx.NewPoint(dpName, tags, fields, time.Now())

@@ -6,8 +6,8 @@ func (pr *Process) AddFilter(filter Filter) IDt {
 		pr.apiMutex.Unlock()
 	}()
 	pr.apiMutex.Lock()
-	filter.ID = GetNewID(pr.filters)
-	pr.filters = append(pr.filters, filter)
+	filter.ID = GetNewID(pr.Config.Filters)
+	pr.Config.Filters = append(pr.Config.Filters, filter)
 	return filter.ID
 }
 
@@ -17,9 +17,9 @@ func (pr *Process) RemoveFilter(ID IDt) {
 		pr.apiMutex.Unlock()
 	}()
 	pr.apiMutex.Lock()
-	for i, f := range pr.filters {
+	for i, f := range pr.Config.Filters {
 		if f.ID == ID {
-			pr.filters = append(pr.filters[:i], pr.filters[i+1:]...)
+			pr.Config.Filters = append(pr.Config.Filters[:i], pr.Config.Filters[i+1:]...)
 		}
 	}
 }
@@ -30,7 +30,7 @@ func (pr *Process) AddSelector(selector Selector) {
 		pr.apiMutex.Unlock()
 	}()
 	pr.apiMutex.Lock()
-	pr.selectors = append(pr.selectors, selector)
+	pr.Config.Selectors = append(pr.Config.Selectors, selector)
 	pr.mqttAdapter.Subscribe(selector.Topic, 0)
 }
 
@@ -40,20 +40,20 @@ func (pr *Process) RemoveSelector(ID IDt) {
 		pr.apiMutex.Unlock()
 	}()
 	pr.apiMutex.Lock()
-	for i, s := range pr.selectors {
+	for i, s := range pr.Config.Selectors {
 		if s.ID == ID {
 			pr.mqttAdapter.Unsubscribe(s.Topic)
-			pr.selectors = append(pr.selectors[:i], pr.selectors[i+1:]...)
+			pr.Config.Selectors = append(pr.Config.Selectors[:i], pr.Config.Selectors[i+1:]...)
 		}
 	}
 }
 
 // GetFilters returns all filters
 func (pr *Process) GetFilters() []Filter {
-	return pr.filters
+	return pr.Config.Filters
 }
 
 // GetSelectors return all selectors
-func (pr *Process) GetSelectors() []Filter {
-	return pr.filters
+func (pr *Process) GetSelectors() []Selector {
+	return pr.Config.Selectors
 }

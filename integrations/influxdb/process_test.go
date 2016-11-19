@@ -74,18 +74,6 @@ func TestProcess(t *testing.T) {
 	//Start container : docker run --name influxdb -d -p 8084:8083 -p 8086:8086 -v influxdb:/var/lib/influxdb influxdb:1.1.0-rc1-alpine
 	//Start mqtt broker
 	NumberOfMessagesToSend := 1000
-	config := ProcessConfig{
-		MqttBrokerAddr:     "tcp://localhost:1883",
-		MqttBrokerUsername: "",
-		MqttBrokerPassword: "",
-		MqttClientID:       "blackflowint_sub_test",
-		InfluxAddr:         "http://localhost:8086",
-		InfluxUsername:     "",
-		InfluxPassword:     "",
-		InfluxDB:           "iotmsg_test",
-		BatchMaxSize:       1000,
-		SaveInterval:       1000,
-	}
 	selector := []Selector{
 		Selector{Topic: "testDomain/jim1/evt/zw/2/sen_temp/1"},
 		Selector{Topic: "testDomain/jim1/evt/zw/3/sen_temp/1"},
@@ -104,6 +92,20 @@ func TestProcess(t *testing.T) {
 			IsAtomic: true,
 		},
 	}
+	config := ProcessConfig{
+		MqttBrokerAddr:     "tcp://localhost:1883",
+		MqttBrokerUsername: "",
+		MqttBrokerPassword: "",
+		MqttClientID:       "blackflowint_sub_test",
+		InfluxAddr:         "http://localhost:8086",
+		InfluxUsername:     "",
+		InfluxPassword:     "",
+		InfluxDB:           "iotmsg_test",
+		BatchMaxSize:       1000,
+		SaveInterval:       1000,
+		Filters:            filters,
+		Selectors:          selector,
+	}
 
 	influxC, err := influx.NewHTTPClient(influx.HTTPConfig{
 		Addr:     config.InfluxAddr, //"http://localhost:8086",
@@ -115,7 +117,8 @@ func TestProcess(t *testing.T) {
 	}
 
 	CleanUpDB(influxC, &config)
-	proc := NewProcess(&config, selector, filters)
+	proc := NewProcess(&config)
+	proc.Init()
 	err = proc.Start()
 	if err != nil {
 		t.Fatal(err)
@@ -159,7 +162,8 @@ func TestFilter(t *testing.T) {
 			IsAtomic:    false,
 		},
 	}
-	proc := NewProcess(nil, nil, filters)
+
+	proc := NewProcess(&ProcessConfig{Filters: filters})
 	msg := iotmsg.NewIotMsg(iotmsg.MsgTypeEvt, "sensor", "temperature", nil)
 	log.Info("Test #1")
 	if !proc.filter("jim1/cmd/test/1", msg, "", 0) {
@@ -194,7 +198,7 @@ func TestFilter(t *testing.T) {
 			IsAtomic:    true,
 		},
 	}
-	proc = NewProcess(nil, nil, filters)
+	proc = NewProcess(&ProcessConfig{Filters: filters})
 	msg = iotmsg.NewIotMsg(iotmsg.MsgTypeEvt, "binary", "switch", nil)
 	if !proc.filter("jim1/cmd/test/3", msg, "", 0) {
 		t.Error("Topic check has to return true.")
@@ -218,7 +222,7 @@ func TestFilter(t *testing.T) {
 			IsAtomic:    true,
 		},
 	}
-	proc = NewProcess(nil, nil, filters)
+	proc = NewProcess(&ProcessConfig{Filters: filters})
 	msg = iotmsg.NewIotMsg(iotmsg.MsgTypeEvt, "test", "filter", nil)
 	if proc.filter("jim/cmd/test/addfilter", msg, "", 0) {
 		t.Error("Topic check has to return False.")
