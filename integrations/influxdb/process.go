@@ -73,7 +73,7 @@ func (pr *Process) Init() error {
 // OnMessage is invoked by an adapter on every new message
 // The code is executed in callers goroutine
 func (pr *Process) OnMessage(topic string, iotMsg *iotmsg.IotMsg, domain string) {
-	log.Debugf("New msg of class = %s", iotMsg.Class)
+	// log.Debugf("New msg of class = %s", iotMsg.Class)
 	if pr.filter(topic, iotMsg, domain, 0) {
 		msg, err := pr.transform(topic, iotMsg, domain)
 		if err != nil {

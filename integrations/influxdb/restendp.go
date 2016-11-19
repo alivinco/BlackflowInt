@@ -1,13 +1,17 @@
 package influxdb
 
-import "github.com/labstack/echo"
+import (
+	"net/http"
 
-type ProcessApiRestEndp struct {
-	Processes []Process
+	"github.com/labstack/echo"
+)
+
+type IntegrationApiRestEndp struct {
+	Processes []*Process
 	Echo      *echo.Echo
 }
 
-func (endp *ProcessApiRestEndp) SetupRouts() {
+func (endp *IntegrationApiRestEndp) SetupRouts() {
 	endp.Echo.PUT("/blackflowint/influxdb/api/proc", endp.AddProcessEndpoint)
 	endp.Echo.POST("/blackflowint/influxdb/api/proc/ctl", endp.CtlProcessEndpoint)
 	endp.Echo.GET("/blackflowint/influxdb/api/proc/filters", endp.GetFiltersEndpoint)
@@ -18,32 +22,35 @@ func (endp *ProcessApiRestEndp) SetupRouts() {
 	endp.Echo.DELETE("/blackflowint/influxdb/api/proc/selectors/:id", endp.RemoveSelectorEndpoint)
 }
 
-func (endp *ProcessApiRestEndp) AddFilterEndpoint(c echo.Context) error {
+func (endp *IntegrationApiRestEndp) AddFilterEndpoint(c echo.Context) error {
 	return nil
 }
-func (endp *ProcessApiRestEndp) RemoveFilterEndpoint(c echo.Context) error {
+func (endp *IntegrationApiRestEndp) RemoveFilterEndpoint(c echo.Context) error {
 	return nil
 }
-func (endp *ProcessApiRestEndp) GetFiltersEndpoint(c echo.Context) error {
-	// resp := []Filter{}
-	// return c.JSON(http.StatusCreated, endp.Process.GetFilters())
+func (endp *IntegrationApiRestEndp) GetFiltersEndpoint(c echo.Context) error {
+	resp := []Filter{}
+	for _, proc := range endp.Processes {
+		resp = append(resp, proc.GetFilters()...)
+	}
+	return c.JSON(http.StatusCreated, resp)
+	// return nil
+}
+func (endp *IntegrationApiRestEndp) GetSelectorsEndpoint(c echo.Context) error {
 	return nil
 }
-func (endp *ProcessApiRestEndp) GetSelectorsEndpoint(c echo.Context) error {
+func (endp *IntegrationApiRestEndp) AddSelectorEndpoint(c echo.Context) error {
 	return nil
 }
-func (endp *ProcessApiRestEndp) AddSelectorEndpoint(c echo.Context) error {
+func (endp *IntegrationApiRestEndp) RemoveSelectorEndpoint(c echo.Context) error {
 	return nil
 }
-func (endp *ProcessApiRestEndp) RemoveSelectorEndpoint(c echo.Context) error {
+func (endp *IntegrationApiRestEndp) CtlProcessEndpoint(c echo.Context) error {
 	return nil
 }
-func (endp *ProcessApiRestEndp) CtlProcessEndpoint(c echo.Context) error {
+func (endp *IntegrationApiRestEndp) AddProcessEndpoint(c echo.Context) error {
 	return nil
 }
-func (endp *ProcessApiRestEndp) AddProcessEndpoint(c echo.Context) error {
-	return nil
-}
-func (endp *ProcessApiRestEndp) RemoveProcessEndpoint(c echo.Context) error {
+func (endp *IntegrationApiRestEndp) RemoveProcessEndpoint(c echo.Context) error {
 	return nil
 }

@@ -90,14 +90,14 @@ func (it *Integration) LoadConfig() error {
 
 // SaveConfigs saves configs to json file
 func (it *Integration) SaveConfigs() error {
-	for _, prc := range it.processes {
-		for _, prcConf := range it.processConfigs {
-			if prc.Config.ID == prcConf.ID {
-				prcConf.Filters = prc.GetFilters()
-				prcConf.Selectors = prc.GetSelectors()
-			}
-		}
-	}
+	// for _, prc := range it.processes {
+	// 	for _, prcConf := range it.processConfigs {
+	// 		if prc.Config.ID == prcConf.ID {
+	// 			prcConf.Filters = prc.GetFilters()
+	// 			prcConf.Selectors = prc.GetSelectors()
+	// 		}
+	// 	}
+	// }
 	payload, err := json.Marshal(it.processConfigs)
 	if err != nil {
 		return err

@@ -3,7 +3,7 @@
         "ID": 0,
         "Name": "",
         "MqttBrokerAddr": "tcp://localhost:1883",
-        "MqttClientID": "blackflowint_sub_test",
+        "MqttClientID": "blackflowint_sub",
         "MqttBrokerUsername": "",
         "MqttBrokerPassword": "",
         "InfluxAddr": "http://localhost:8086",
@@ -43,7 +43,7 @@
         "Selectors": [
             {
                 "ID": 0,
-                "Topic": "*/jim1/evt*"
+                "Topic": "+/jim1/evt/#"
             }
         ]
     }
