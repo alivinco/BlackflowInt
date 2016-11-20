@@ -17,21 +17,23 @@ func (pr *Process) RemoveFilter(ID IDt) {
 		pr.apiMutex.Unlock()
 	}()
 	pr.apiMutex.Lock()
-	for i, f := range pr.Config.Filters {
-		if f.ID == ID {
+	for i := range pr.Config.Filters {
+		if pr.Config.Filters[i].ID == ID {
 			pr.Config.Filters = append(pr.Config.Filters[:i], pr.Config.Filters[i+1:]...)
 		}
 	}
 }
 
 // AddSelector adds new selector
-func (pr *Process) AddSelector(selector Selector) {
+func (pr *Process) AddSelector(selector Selector) IDt {
 	defer func() {
 		pr.apiMutex.Unlock()
 	}()
 	pr.apiMutex.Lock()
+	selector.ID = GetNewID(pr.Config.Filters)
 	pr.Config.Selectors = append(pr.Config.Selectors, selector)
 	pr.mqttAdapter.Subscribe(selector.Topic, 0)
+	return selector.ID
 }
 
 // RemoveSelector removes 1 selector entry
@@ -40,9 +42,9 @@ func (pr *Process) RemoveSelector(ID IDt) {
 		pr.apiMutex.Unlock()
 	}()
 	pr.apiMutex.Lock()
-	for i, s := range pr.Config.Selectors {
-		if s.ID == ID {
-			pr.mqttAdapter.Unsubscribe(s.Topic)
+	for i := range pr.Config.Selectors {
+		if pr.Config.Selectors[i].ID == ID {
+			pr.mqttAdapter.Unsubscribe(pr.Config.Selectors[i].Topic)
 			pr.Config.Selectors = append(pr.Config.Selectors[:i], pr.Config.Selectors[i+1:]...)
 		}
 	}

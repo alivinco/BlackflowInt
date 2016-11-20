@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sync"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/alivinco/blackflowint/models"
@@ -16,17 +17,18 @@ import (
 type Integration struct {
 	processes []*Process
 	// in memmory copy of config file
-	processConfigs []ProcessConfig
-	StoreLocation  string
-	storeFullPath  string
-	Name           string
+	processConfigs  []ProcessConfig
+	StoreLocation   string
+	storeFullPath   string
+	Name            string
+	configSaveMutex *sync.Mutex
 }
 
 // GetProcessByID returns process by it's ID
 func (it *Integration) GetProcessByID(ID IDt) *Process {
-	for _, proc := range it.processes {
-		if proc.Config.ID == ID {
-			return proc
+	for i := range it.processes {
+		if it.processes[i].Config.ID == ID {
+			return it.processes[i]
 		}
 	}
 	return nil
@@ -35,7 +37,7 @@ func (it *Integration) GetProcessByID(ID IDt) *Process {
 // GetDefaultIntegrConfig returns default config .
 func (it *Integration) GetDefaultIntegrConfig() []ProcessConfig {
 	selector := []Selector{
-		Selector{Topic: "*/jim1/evt*"},
+		Selector{ID: 1, Topic: "*/jim1/evt*"},
 	}
 	filters := []Filter{
 		Filter{
@@ -50,6 +52,7 @@ func (it *Integration) GetDefaultIntegrConfig() []ProcessConfig {
 		},
 	}
 	config := ProcessConfig{
+		ID:                 1,
 		MqttBrokerAddr:     "tcp://localhost:1883",
 		MqttBrokerUsername: "",
 		MqttBrokerPassword: "",
@@ -98,6 +101,10 @@ func (it *Integration) SaveConfigs() error {
 	// 		}
 	// 	}
 	// }
+	it.configSaveMutex.Lock()
+	defer func() {
+		it.configSaveMutex.Unlock()
+	}()
 	payload, err := json.Marshal(it.processConfigs)
 	if err != nil {
 		return err
@@ -107,17 +114,18 @@ func (it *Integration) SaveConfigs() error {
 
 // InitProcesses starts processes based on ProcessConfigs
 func (it *Integration) InitProcesses(autoStart bool) error {
+	it.configSaveMutex = &sync.Mutex{}
 	if it.processConfigs == nil {
 		return errors.New("Load configurations first.")
 	}
-	for _, procConf := range it.processConfigs {
-		proc := NewProcess(&procConf)
+	for i := range it.processConfigs {
+		proc := NewProcess(&it.processConfigs[i])
 		proc.Init()
-		log.Infof("Process ID=%d was initialized.", procConf.ID)
+		log.Infof("Process ID=%d was initialized.", it.processConfigs[i].ID)
 		if autoStart {
 			err := proc.Start()
 			if err != nil {
-				log.Errorf("Process ID=%d failed to start . Error : %s", procConf, err)
+				log.Errorf("Process ID=%d failed to start . Error : %s", it.processConfigs[i], err)
 			}
 		}
 		it.processes = append(it.processes, proc)
@@ -132,5 +140,7 @@ func Boot(mainConfig *models.MainConfig, restHandler *echo.Echo) *Integration {
 	integr.storeFullPath = filepath.Join(integr.StoreLocation, integr.Name+".json")
 	integr.LoadConfig()
 	integr.InitProcesses(true)
+	restAPI := IntegrationAPIRestEndp{&integr, restHandler}
+	restAPI.SetupRoutes()
 	return &integr
 }

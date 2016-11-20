@@ -94,47 +94,47 @@ func (pr *Process) OnMessage(topic string, iotMsg *iotmsg.IotMsg, domain string)
 // Filter - transforms IotMsg into DB compatable struct
 func (pr *Process) filter(topic string, iotMsg *iotmsg.IotMsg, domain string, filterID IDt) bool {
 	var result bool
-	for _, filter := range pr.Config.Filters {
-		if (filter.IsAtomic && filterID == 0) || (filter.ID == filterID) {
+	for i := range pr.Config.Filters {
+		if (pr.Config.Filters[i].IsAtomic && filterID == 0) || (pr.Config.Filters[i].ID == filterID) {
 
 			result = true
 			//////////////////////////////////////////////////////////
-			if filter.Topic != "" {
-				if topic != filter.Topic {
+			if pr.Config.Filters[i].Topic != "" {
+				if topic != pr.Config.Filters[i].Topic {
 					result = false
 				}
 			}
-			if filter.Domain != "" {
-				if domain != filter.Domain {
+			if pr.Config.Filters[i].Domain != "" {
+				if domain != pr.Config.Filters[i].Domain {
 					result = false
 				}
 			}
-			if filter.MsgType != "" {
-				if MapIotMsgType(iotMsg.Type) != filter.MsgType {
+			if pr.Config.Filters[i].MsgType != "" {
+				if MapIotMsgType(iotMsg.Type) != pr.Config.Filters[i].MsgType {
 					result = false
 				}
 			}
-			if filter.MsgClass != "" {
-				if iotMsg.Class != filter.MsgClass {
+			if pr.Config.Filters[i].MsgClass != "" {
+				if iotMsg.Class != pr.Config.Filters[i].MsgClass {
 					result = false
 				}
 			}
-			if filter.MsgSubClass != "" {
-				if iotMsg.SubClass != filter.MsgSubClass {
+			if pr.Config.Filters[i].MsgSubClass != "" {
+				if iotMsg.SubClass != pr.Config.Filters[i].MsgSubClass {
 					result = false
 				}
 			}
 
 			////////////////////////////////////////////////////////////
-			if filter.Negation {
+			if pr.Config.Filters[i].Negation {
 				result = !(result)
 			}
-			if filter.LinkedFilterID != 0 {
+			if pr.Config.Filters[i].LinkedFilterID != 0 {
 				// filters chaining
 				// log.Debug("Starting recursion. Current result = ", result)
-				nextResult := pr.filter(topic, iotMsg, domain, filter.LinkedFilterID)
+				nextResult := pr.filter(topic, iotMsg, domain, pr.Config.Filters[i].LinkedFilterID)
 				// log.Debug("Nested call returned ", nextResult)
-				switch filter.LinkedFilterBooleanOperation {
+				switch pr.Config.Filters[i].LinkedFilterBooleanOperation {
 				case "or":
 					result = result || nextResult
 				case "and":
