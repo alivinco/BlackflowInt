@@ -8,7 +8,7 @@ import (
 )
 
 // DefaultTransform - transforms IotMsg into InfluxDb datapoint
-func DefaultTransform(topic string, iotMsg *iotmsg.IotMsg, domain string) (*influx.Point, error) {
+func DefaultTransform(context *MsgContext, topic string, iotMsg *iotmsg.IotMsg, domain string) (*influx.Point, error) {
 	var dpName string
 	tags := map[string]string{
 		"topic":  topic,
@@ -26,7 +26,7 @@ func DefaultTransform(topic string, iotMsg *iotmsg.IotMsg, domain string) (*infl
 			"value": iotMsg.GetDefaultFloat(),
 			"unit":  iotMsg.Default.Unit,
 		}
-		dpName = "sensors"
+		dpName = "sensor"
 		break
 	case "binary":
 		fields = map[string]interface{}{
@@ -51,9 +51,16 @@ func DefaultTransform(topic string, iotMsg *iotmsg.IotMsg, domain string) (*infl
 		dpName = "default"
 	}
 	if fields != nil {
+		if context.MeasurementName == "" {
+			context.MeasurementName = dpName
+		} else {
+			dpName = context.MeasurementName
+		}
 		point, _ := influx.NewPoint(dpName, tags, fields, time.Now())
+
 		return point, nil
 	}
+
 	return nil, nil
 
 }

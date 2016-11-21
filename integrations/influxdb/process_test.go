@@ -15,9 +15,33 @@ import (
 	influx "github.com/influxdata/influxdb/client/v2"
 )
 
+var measurements []Measurement
+
 func Setup() {
 	log.SetFormatter(&log.TextFormatter{FullTimestamp: true})
 	log.SetLevel(log.DebugLevel)
+	measurements = []Measurement{
+		Measurement{
+			Name: "sensor",
+			RetentionPolicyDuration: "4w",
+			RetentionPolicyName:     "sensor_4w",
+		},
+		Measurement{
+			Name: "level",
+			RetentionPolicyDuration: "4w",
+			RetentionPolicyName:     "level_4w",
+		},
+		Measurement{
+			Name: "binary",
+			RetentionPolicyDuration: "4w",
+			RetentionPolicyName:     "binary_4w",
+		},
+		Measurement{
+			Name: "default",
+			RetentionPolicyDuration: "4w",
+			RetentionPolicyName:     "default_4w",
+		},
+	}
 }
 
 func MsgGenerator(config ProcessConfig, numberOfMsg int) {
@@ -105,6 +129,7 @@ func TestProcess(t *testing.T) {
 		SaveInterval:       1000,
 		Filters:            filters,
 		Selectors:          selector,
+		Measurements:       measurements,
 	}
 
 	influxC, err := influx.NewHTTPClient(influx.HTTPConfig{
@@ -165,22 +190,23 @@ func TestFilter(t *testing.T) {
 
 	proc := NewProcess(&ProcessConfig{Filters: filters})
 	msg := iotmsg.NewIotMsg(iotmsg.MsgTypeEvt, "sensor", "temperature", nil)
+	context := &MsgContext{}
 	log.Info("Test #1")
-	if !proc.filter("jim1/cmd/test/1", msg, "", 0) {
+	if !proc.filter(context, "jim1/cmd/test/1", msg, "", 0) {
 		t.Error("Topic check has to return true.")
 	}
 	log.Info("Test #2")
-	if proc.filter("jim1/cmd/test/2", msg, "", 0) {
+	if proc.filter(context, "jim1/cmd/test/2", msg, "", 0) {
 		t.Error("Topic check has to return false.")
 	}
 	log.Info("Test #3")
 	msg = iotmsg.NewIotMsg(iotmsg.MsgTypeEvt, "binary", "test", nil)
-	if !proc.filter("jim1/cmd/test/3", msg, "", 0) {
+	if !proc.filter(context, "jim1/cmd/test/3", msg, "", 0) {
 		t.Error("Topic check has to return true.")
 	}
 	log.Info("Test #4")
 	msg = iotmsg.NewIotMsg(iotmsg.MsgTypeEvt, "binary", "lock", nil)
-	if !proc.filter("jim1/cmd/test/3", msg, "", 0) {
+	if !proc.filter(context, "jim1/cmd/test/3", msg, "", 0) {
 		t.Error("Topic check has to return true.")
 	}
 	log.Info("Test #5")
@@ -200,11 +226,11 @@ func TestFilter(t *testing.T) {
 	}
 	proc = NewProcess(&ProcessConfig{Filters: filters})
 	msg = iotmsg.NewIotMsg(iotmsg.MsgTypeEvt, "binary", "switch", nil)
-	if !proc.filter("jim1/cmd/test/3", msg, "", 0) {
+	if !proc.filter(context, "jim1/cmd/test/3", msg, "", 0) {
 		t.Error("Topic check has to return true.")
 	}
 	log.Info("Test #6")
-	if proc.filter("jim1/cmd/test/1", msg, "", 0) {
+	if proc.filter(context, "jim1/cmd/test/1", msg, "", 0) {
 		t.Error("Topic check has to return false.")
 	}
 	log.Info("Test #7 Add filter")
@@ -224,16 +250,16 @@ func TestFilter(t *testing.T) {
 	}
 	proc = NewProcess(&ProcessConfig{Filters: filters})
 	msg = iotmsg.NewIotMsg(iotmsg.MsgTypeEvt, "test", "filter", nil)
-	if proc.filter("jim/cmd/test/addfilter", msg, "", 0) {
+	if proc.filter(context, "jim/cmd/test/addfilter", msg, "", 0) {
 		t.Error("Topic check has to return False.")
 	}
 	newID := proc.AddFilter(Filter{IsAtomic: true, Topic: "jim/cmd/test/addfilter"})
 	t.Logf("New filter ID = %d", newID)
-	if !proc.filter("jim/cmd/test/addfilter", msg, "", 0) {
+	if !proc.filter(context, "jim/cmd/test/addfilter", msg, "", 0) {
 		t.Error("Topic check has to return true.")
 	}
 	proc.RemoveFilter(newID)
-	if proc.filter("jim/cmd/test/addfilter", msg, "", 0) {
+	if proc.filter(context, "jim/cmd/test/addfilter", msg, "", 0) {
 		t.Error("Topic check has to return False.")
 	}
 	// proc.RemoveFilter

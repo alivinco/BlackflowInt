@@ -10,10 +10,16 @@ import (
 )
 
 // Transform defines function which converts IotMsg into influx data point
-type Transform func(topic string, iotMsg *iotmsglibgo.IotMsg, domain string) (*influx.Point, error)
+type Transform func(context *MsgContext, topic string, iotMsg *iotmsglibgo.IotMsg, domain string) (*influx.Point, error)
 
 // IDt defines type of struct ID
 type IDt int
+
+// MsgContext describes metadata collected throughout pipeline processing .
+type MsgContext struct {
+	FilterID        IDt
+	MeasurementName string
+}
 
 // Selector defines message selector.
 type Selector struct {
@@ -37,6 +43,19 @@ type Filter struct {
 	LinkedFilterBooleanOperation string
 	LinkedFilterID               IDt
 	IsAtomic                     bool
+	// Optional field , all tags defined here will be converted into influxDb tags
+	Tags map[string]string
+	// If set , then the value will overrride default measurement name defined in transformation
+	MeasurementName string
+}
+
+// Measurement stores measurement specific configs like retention policy
+type Measurement struct {
+	Name string
+	// Normally should be combination of Name + RetentionPolicy
+	RetentionPolicyName string
+	// Have to be in format 1d , 1w , 1h .
+	RetentionPolicyDuration string
 }
 
 // ProcessConfig process configuration
@@ -59,6 +78,7 @@ type ProcessConfig struct {
 	SaveInterval time.Duration
 	Filters      []Filter
 	Selectors    []Selector
+	Measurements []Measurement
 }
 
 //ProcessConfigs is a collection of ProcessConfigs

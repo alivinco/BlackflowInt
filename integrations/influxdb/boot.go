@@ -51,6 +51,30 @@ func (it *Integration) GetDefaultIntegrConfig() []ProcessConfig {
 			IsAtomic: true,
 		},
 	}
+
+	measurements := []Measurement{
+		Measurement{
+			Name: "sensor",
+			RetentionPolicyDuration: "4w",
+			RetentionPolicyName:     "sensor_4w",
+		},
+		Measurement{
+			Name: "level",
+			RetentionPolicyDuration: "4w",
+			RetentionPolicyName:     "level_4w",
+		},
+		Measurement{
+			Name: "binary",
+			RetentionPolicyDuration: "4w",
+			RetentionPolicyName:     "binary_4w",
+		},
+		Measurement{
+			Name: "default",
+			RetentionPolicyDuration: "4w",
+			RetentionPolicyName:     "default_4w",
+		},
+	}
+
 	config := ProcessConfig{
 		ID:                 1,
 		MqttBrokerAddr:     "tcp://localhost:1883",
@@ -65,6 +89,7 @@ func (it *Integration) GetDefaultIntegrConfig() []ProcessConfig {
 		SaveInterval:       1000,
 		Filters:            filters,
 		Selectors:          selector,
+		Measurements:       measurements,
 	}
 
 	return []ProcessConfig{config}

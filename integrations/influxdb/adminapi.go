@@ -59,3 +59,8 @@ func (pr *Process) GetFilters() []Filter {
 func (pr *Process) GetSelectors() []Selector {
 	return pr.Config.Selectors
 }
+
+// GetMeasurements return all measurements
+func (pr *Process) GetMeasurements() []Measurement {
+	return pr.Config.Measurements
+}

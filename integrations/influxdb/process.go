@@ -17,7 +17,7 @@ type Process struct {
 	mqttAdapter *adapters.MqttAdapter
 	influxC     influx.Client
 	Config      *ProcessConfig
-	batchPoints influx.BatchPoints
+	batchPoints map[string]influx.BatchPoints
 	ticker      *time.Ticker
 	writeMutex  *sync.Mutex
 	apiMutex    *sync.Mutex
@@ -51,15 +51,23 @@ func (pr *Process) Init() error {
 	if response, err := pr.influxC.Query(q); err == nil && response.Error() == nil {
 		log.Infof("Database %s was created with status :%s", pr.Config.InfluxDB, response.Results)
 	}
-	// Create a new point batch
-	pr.batchPoints, err = influx.NewBatchPoints(influx.BatchPointsConfig{
-		Database:  pr.Config.InfluxDB,
-		Precision: "ns",
-	})
+	// Setting up retention policies
+	for _, mes := range pr.GetMeasurements() {
+		if mes.RetentionPolicyName == "" {
+			mes.RetentionPolicyName = fmt.Sprintf("%s_%s", mes.Name, mes.RetentionPolicyDuration)
+		}
+		q := influx.NewQuery(fmt.Sprintf("CREATE RETENTION POLICY %s DURATION %s REPLICATION 1", mes.RetentionPolicyName, mes.RetentionPolicyDuration), "", "")
+		if response, err := pr.influxC.Query(q); err == nil && response.Error() == nil {
+			log.Infof("Retencion policy %s was created with status :%s", pr.Config.InfluxDB, response.Results)
+		}
+	}
 
+	pr.batchPoints = make(map[string]influx.BatchPoints)
+	err = pr.InitBatchPoint("")
 	if err != nil {
 		log.Fatalln("Error: ", err)
 	}
+
 	log.Info("DB initialization completed.")
 	log.Info("Initializing MQTT adapter.")
 	//"tcp://localhost:1883", "blackflowint", "", ""
@@ -73,14 +81,15 @@ func (pr *Process) Init() error {
 // OnMessage is invoked by an adapter on every new message
 // The code is executed in callers goroutine
 func (pr *Process) OnMessage(topic string, iotMsg *iotmsg.IotMsg, domain string) {
-	// log.Debugf("New msg of class = %s", iotMsg.Class)
-	if pr.filter(topic, iotMsg, domain, 0) {
-		msg, err := pr.transform(topic, iotMsg, domain)
+	// log.Debugf("New msg of class = %s", iotMsg.Class
+	context := &MsgContext{}
+	if pr.filter(context, topic, iotMsg, domain, 0) {
+		msg, err := pr.transform(context, topic, iotMsg, domain)
 		if err != nil {
 			log.Errorf("Transformation error: %s", err)
 		} else {
 			if msg != nil {
-				pr.write(msg)
+				pr.write(context, msg)
 			} else {
 				log.Debug("Message can't be mapped .Skipping .")
 			}
@@ -92,7 +101,7 @@ func (pr *Process) OnMessage(topic string, iotMsg *iotmsg.IotMsg, domain string)
 }
 
 // Filter - transforms IotMsg into DB compatable struct
-func (pr *Process) filter(topic string, iotMsg *iotmsg.IotMsg, domain string, filterID IDt) bool {
+func (pr *Process) filter(context *MsgContext, topic string, iotMsg *iotmsg.IotMsg, domain string, filterID IDt) bool {
 	var result bool
 	for i := range pr.Config.Filters {
 		if (pr.Config.Filters[i].IsAtomic && filterID == 0) || (pr.Config.Filters[i].ID == filterID) {
@@ -132,7 +141,7 @@ func (pr *Process) filter(topic string, iotMsg *iotmsg.IotMsg, domain string, fi
 			if pr.Config.Filters[i].LinkedFilterID != 0 {
 				// filters chaining
 				// log.Debug("Starting recursion. Current result = ", result)
-				nextResult := pr.filter(topic, iotMsg, domain, pr.Config.Filters[i].LinkedFilterID)
+				nextResult := pr.filter(context, topic, iotMsg, domain, pr.Config.Filters[i].LinkedFilterID)
 				// log.Debug("Nested call returned ", nextResult)
 				switch pr.Config.Filters[i].LinkedFilterBooleanOperation {
 				case "or":
@@ -141,6 +150,10 @@ func (pr *Process) filter(topic string, iotMsg *iotmsg.IotMsg, domain string, fi
 					result = result && nextResult
 
 				}
+			}
+			context.FilterID = pr.Config.Filters[i].ID
+			if pr.Config.Filters[i].MeasurementName != "" {
+				context.MeasurementName = pr.Config.Filters[i].MeasurementName
 			}
 			//////////////////////////////////////////////////////////////
 			if result {
@@ -157,11 +170,15 @@ func (pr *Process) filter(topic string, iotMsg *iotmsg.IotMsg, domain string, fi
 	return false
 }
 
-func (pr *Process) write(point *influx.Point) {
-	pr.writeMutex.Lock()
-	pr.batchPoints.AddPoint(point)
-	pr.writeMutex.Unlock()
-	if len(pr.batchPoints.Points()) >= pr.Config.BatchMaxSize {
+func (pr *Process) write(context *MsgContext, point *influx.Point) {
+	log.Debugf("Writing measurement %s", context.MeasurementName)
+	if context.MeasurementName != "" {
+		pr.writeMutex.Lock()
+		pr.batchPoints[context.MeasurementName].AddPoint(point)
+		pr.writeMutex.Unlock()
+	}
+
+	if len(pr.batchPoints[context.MeasurementName].Points()) >= pr.Config.BatchMaxSize {
 		pr.WriteIntoDb()
 	}
 }
@@ -173,6 +190,30 @@ func (pr *Process) Configure(selectors []Selector, filters []Filter) {
 	pr.Config.Filters = filters
 }
 
+// InitBatchPoint initializes new batch point or resets existing one .
+func (pr *Process) InitBatchPoint(bpName string) error {
+	measurements := pr.GetMeasurements()
+	var retentionPolicyName string
+	var err error
+
+	for mi := range measurements {
+		if measurements[mi].Name == bpName || bpName == "" {
+			retentionPolicyName = measurements[mi].RetentionPolicyName
+			// Create a new point batch
+			pr.batchPoints[measurements[mi].Name], err = influx.NewBatchPoints(influx.BatchPointsConfig{
+				Database:        pr.Config.InfluxDB,
+				Precision:       "ns",
+				RetentionPolicy: retentionPolicyName,
+			})
+			if bpName != "" {
+				return err
+			}
+		}
+	}
+
+	return err
+}
+
 // WriteIntoDb - inserts record into db
 func (pr *Process) WriteIntoDb() {
 	// Mutex is needed to fix condition when the function is invoked by timer and batch size almost at the same time
@@ -180,28 +221,23 @@ func (pr *Process) WriteIntoDb() {
 		pr.writeMutex.Unlock()
 	}()
 	pr.writeMutex.Lock()
-	if len(pr.batchPoints.Points()) == 0 {
-		return
-	}
 
-	log.Debugf("Writing batch of size = %d", len(pr.batchPoints.Points()))
-	var err error
-	err = pr.influxC.Write(pr.batchPoints)
-	if err != nil {
-		log.Error("Error: ", err)
-	}
-	// Create a new point batch
-	// Create a new point batch
-	pr.batchPoints, err = influx.NewBatchPoints(influx.BatchPointsConfig{
-		Database:  pr.Config.InfluxDB,
-		Precision: "ns",
-	})
+	for bpKey := range pr.batchPoints {
+		if len(pr.batchPoints[bpKey].Points()) == 0 {
+			continue
+		}
+		log.Debugf("Writing batch of size = %d", len(pr.batchPoints[bpKey].Points()))
+		var err error
+		err = pr.influxC.Write(pr.batchPoints[bpKey])
+		if err != nil {
+			log.Error("Error: ", err)
+		}
+		err = pr.InitBatchPoint(bpKey)
 
-	if err != nil {
-		log.Fatalln("Error: ", err)
+		if err != nil {
+			log.Fatalln("Error: ", err)
+		}
 	}
-	// points = []*influx.Point{}
-
 }
 
 // Start starts the process by starting MQTT adapter ,
