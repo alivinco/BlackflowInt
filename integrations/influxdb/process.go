@@ -52,13 +52,16 @@ func (pr *Process) Init() error {
 		log.Infof("Database %s was created with status :%s", pr.Config.InfluxDB, response.Results)
 	}
 	// Setting up retention policies
+	log.Info("Setting up retention policies")
 	for _, mes := range pr.GetMeasurements() {
 		if mes.RetentionPolicyName == "" {
-			mes.RetentionPolicyName = fmt.Sprintf("%s_%s", mes.Name, mes.RetentionPolicyDuration)
+			mes.RetentionPolicyName = mes.Name
 		}
-		q := influx.NewQuery(fmt.Sprintf("CREATE RETENTION POLICY %s DURATION %s REPLICATION 1", mes.RetentionPolicyName, mes.RetentionPolicyDuration), "", "")
+		q := influx.NewQuery(fmt.Sprintf("CREATE RETENTION POLICY %s ON %s DURATION %s REPLICATION 1", mes.RetentionPolicyName, pr.Config.InfluxDB, mes.RetentionPolicyDuration), pr.Config.InfluxDB, "")
 		if response, err := pr.influxC.Query(q); err == nil && response.Error() == nil {
-			log.Infof("Retencion policy %s was created with status :%s", pr.Config.InfluxDB, response.Results)
+			log.Infof("Retencion policy %s was created with status :%s", mes.RetentionPolicyName, response.Results)
+		} else {
+			log.Errorf("Configuration of retention policy %s failed with status : %s ", mes.RetentionPolicyName, response.Err)
 		}
 	}
 
@@ -171,7 +174,8 @@ func (pr *Process) filter(context *MsgContext, topic string, iotMsg *iotmsg.IotM
 }
 
 func (pr *Process) write(context *MsgContext, point *influx.Point) {
-	log.Debugf("Writing measurement %s", context.MeasurementName)
+	log.Debugf("Writing measurement: %s", context.MeasurementName)
+	// log.Debugf("Point: %+v", point)
 	if context.MeasurementName != "" {
 		pr.writeMutex.Lock()
 		pr.batchPoints[context.MeasurementName].AddPoint(point)
@@ -226,11 +230,11 @@ func (pr *Process) WriteIntoDb() {
 		if len(pr.batchPoints[bpKey].Points()) == 0 {
 			continue
 		}
-		log.Debugf("Writing batch of size = %d", len(pr.batchPoints[bpKey].Points()))
+		log.Debugf("Writing batch of size = %d , using retention policy = %s into db = %s", len(pr.batchPoints[bpKey].Points()), pr.batchPoints[bpKey].RetentionPolicy(), pr.batchPoints[bpKey].Database())
 		var err error
 		err = pr.influxC.Write(pr.batchPoints[bpKey])
 		if err != nil {
-			log.Error("Error: ", err)
+			log.Error("Batch write error: ", err)
 		}
 		err = pr.InitBatchPoint(bpKey)
 

@@ -24,22 +24,22 @@ func Setup() {
 		Measurement{
 			Name: "sensor",
 			RetentionPolicyDuration: "4w",
-			RetentionPolicyName:     "sensor_4w",
+			RetentionPolicyName:     "sensor",
 		},
 		Measurement{
 			Name: "level",
 			RetentionPolicyDuration: "4w",
-			RetentionPolicyName:     "level_4w",
+			RetentionPolicyName:     "level",
 		},
 		Measurement{
 			Name: "binary",
 			RetentionPolicyDuration: "4w",
-			RetentionPolicyName:     "binary_4w",
+			RetentionPolicyName:     "binary",
 		},
 		Measurement{
 			Name: "default",
 			RetentionPolicyDuration: "4w",
-			RetentionPolicyName:     "default_4w",
+			RetentionPolicyName:     "default",
 		},
 	}
 }
@@ -66,7 +66,7 @@ func MsgGenerator(config ProcessConfig, numberOfMsg int) {
 
 func CleanUpDB(influxC influx.Client, config *ProcessConfig) {
 	// Delete measurments
-	q := influx.NewQuery(fmt.Sprintf("DROP MEASUREMENT sensors"), config.InfluxDB, "")
+	q := influx.NewQuery(fmt.Sprintf("DROP MEASUREMENT sensor"), config.InfluxDB, "")
 	if response, err := influxC.Query(q); err == nil && response.Error() == nil {
 		log.Info("Datebase was deleted with status :", response.Results)
 
@@ -75,7 +75,7 @@ func CleanUpDB(influxC influx.Client, config *ProcessConfig) {
 }
 
 func Count(influxC influx.Client, config *ProcessConfig) int {
-	q := influx.NewQuery(fmt.Sprintf("select count(value) from sensors"), config.InfluxDB, "")
+	q := influx.NewQuery(fmt.Sprintf("select count(value) from sensor.sensor"), config.InfluxDB, "")
 	if response, err := influxC.Query(q); err == nil && response.Error() == nil {
 		if len(response.Results[0].Series) > 0 {
 			countN, ok := response.Results[0].Series[0].Values[0][1].(json.Number)
@@ -150,7 +150,7 @@ func TestProcess(t *testing.T) {
 	}
 	MsgGenerator(config, NumberOfMessagesToSend)
 
-	// time.Sleep(time.Second * 10)
+	time.Sleep(time.Second * 2)
 	CountOfSavedEvents := Count(influxC, &config)
 	if NumberOfMessagesToSend != CountOfSavedEvents {
 		t.Errorf("Number of sent messages doesn't match number of saved messages. Number of sent messages = %d , number of saved events = %d", NumberOfMessagesToSend, CountOfSavedEvents)

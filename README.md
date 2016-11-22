@@ -20,11 +20,24 @@
        |                | (subsriptions) |
        |                ------------------
       \|/ 
----------------             --------------          ----------------        --------------           ------------
-|             |             |            |          |              |        |   Batch    |           |          | 
-| MQTT broker | ---MSG----> |  Filters   | --MSG--> |  Tag msg     |--MSG-->| aggregator |---BATCH-->| InfluxDB |
-|             |             |            |          |              |        |            |           |          |
----------------             --------------          ----------------        --------------           ------------
+---------------             ------------                    -------------                      ---------                 ---------------       
+|             |             |          |                    |           |                      |       |                 |   DataPoint |        
+| MQTT broker | ---MSG----> |  Filters | --Context+IotMsg-->| Transform |--Context+DataPoint-->| Write | ---DataPoint--> |     Batch   |
+|             |             |          |                    |           |                      |       |                 |             |       
+---------------             ------------                    -------------                      ---------                 ---------------       
+																															  |	
+                           ------------------------Batch size trigger----------------------------------------------------------
+                           |
+                          \|/
+                      --------------           ------------
+   ---------          |   Write    |           |          |
+   | Timer |--------->|   Batch    |---BATCH-->| InfluxDB |
+   ---------          |            |           |          |
+                      --------------           ------------
+
+
+
+
 
 ````
 
@@ -32,9 +45,9 @@
 
 ````                      
 
-                          -----------------------------------
-                          | ProcessConfig,Selectors,Filters | 
-                          -----------------------------------  
+                          ------------------------------------------------
+                          | ProcessConfig,Selectors,Filters,Measurements | 
+                          ------------------------------------------------
                                |
                               \|/ 
 ----------------         ------------------------          -------------
@@ -42,9 +55,9 @@
 |              |         |                      |          |           |
 ----------------         ------------------------          -------------
 
-                          -----------------------------------
-                          | ProcessConfig,Selectors,Filters | 
-                          -----------------------------------
+                          ------------------------------------------------
+                          | ProcessConfig,Selectors,Filters,Measurements | 
+                          ------------------------------------------------
                                |
                               \|/ 
 ----------------         ------------------------          -------------
@@ -88,6 +101,12 @@ type Filter struct {
 	LinkedFilterBooleanOperation string
 	LinkedFilterID               int
 	IsAtomic                     bool
+	// Optional field , all tags defined here will be converted into influxDb tags
+	Tags map[string]string
+	// If set , then the value will overrride default measurement name defined in transformation
+	MeasurementName string
+	// definies if filter is temporary and can be stored in memory or persisted to disk
+	InMemory bool
 }
 ```
 
@@ -95,12 +114,29 @@ Selector structure :
 
 ``` 
 type Selector struct {
+	ID    IDt
 	Topic string
+	// definies if filter is temporary and can be stored in memory or persisted to disk
+	InMemory bool
 }
 ```
 
 Tags : 
  TODO 
+
+Measurement structure : 
+
+```
+// Measurement stores measurement specific configs like retention policy
+type Measurement struct {
+	Name string
+	// Normally should be composed of Name + RetentionPolicy , for instance : sensor_1d
+	RetentionPolicyName string
+	// Have to be in format 1d , 1w , 1h .
+	RetentionPolicyDuration string
+}
+
+```
 
 Process config :
 
@@ -121,13 +157,29 @@ type ProcessConfig struct {
 	BatchMaxSize int
 	// Interval in miliseconds
 	SaveInterval time.Duration
+	Filters      []Filter
+	Selectors    []Selector
+	Measurements []Measurement
 }
 
 ```
 
-Application config :
+Message context :
+```
+type MsgContext struct {
+	FilterID        IDt
+	MeasurementName string
+}
 
 ```
 
+BlackflowInt global config :
+
+```
+type MainConfig struct {
+	StorageLocation        string
+	AdminRestAPIBindAddres string
+	LogPath                string
+}
 
 ```

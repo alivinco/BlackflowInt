@@ -15,7 +15,7 @@ type Transform func(context *MsgContext, topic string, iotMsg *iotmsglibgo.IotMs
 // IDt defines type of struct ID
 type IDt int
 
-// MsgContext describes metadata collected throughout pipeline processing .
+// MsgContext describes metadata collected along message goint throughout the pipeline  .
 type MsgContext struct {
 	FilterID        IDt
 	MeasurementName string
@@ -23,8 +23,9 @@ type MsgContext struct {
 
 // Selector defines message selector.
 type Selector struct {
-	ID    IDt
-	Topic string
+	ID       IDt
+	Topic    string
+	InMemory bool
 }
 
 // Filter defines message filter.
@@ -47,6 +48,8 @@ type Filter struct {
 	Tags map[string]string
 	// If set , then the value will overrride default measurement name defined in transformation
 	MeasurementName string
+	// definies if filter is temporary and can be stored in memory or persisted to disk
+	InMemory bool
 }
 
 // Measurement stores measurement specific configs like retention policy

@@ -55,23 +55,23 @@ func (it *Integration) GetDefaultIntegrConfig() []ProcessConfig {
 	measurements := []Measurement{
 		Measurement{
 			Name: "sensor",
-			RetentionPolicyDuration: "4w",
-			RetentionPolicyName:     "sensor_4w",
+			RetentionPolicyDuration: "8w",
+			RetentionPolicyName:     "sensor",
 		},
 		Measurement{
 			Name: "level",
-			RetentionPolicyDuration: "4w",
-			RetentionPolicyName:     "level_4w",
+			RetentionPolicyDuration: "8w",
+			RetentionPolicyName:     "level",
 		},
 		Measurement{
 			Name: "binary",
-			RetentionPolicyDuration: "4w",
-			RetentionPolicyName:     "binary_4w",
+			RetentionPolicyDuration: "8w",
+			RetentionPolicyName:     "binary",
 		},
 		Measurement{
 			Name: "default",
-			RetentionPolicyDuration: "4w",
-			RetentionPolicyName:     "default_4w",
+			RetentionPolicyDuration: "8w",
+			RetentionPolicyName:     "default",
 		},
 	}
 
@@ -98,6 +98,9 @@ func (it *Integration) GetDefaultIntegrConfig() []ProcessConfig {
 
 // LoadConfig loads configs from json file and saves it into ProcessConfigs
 func (it *Integration) LoadConfig() error {
+	if it.configSaveMutex == nil {
+		it.configSaveMutex = &sync.Mutex{}
+	}
 	if _, err := os.Stat(it.storeFullPath); os.IsNotExist(err) {
 		it.processConfigs = it.GetDefaultIntegrConfig()
 		log.Info("Integration configuration is loaded from default.")
@@ -139,7 +142,7 @@ func (it *Integration) SaveConfigs() error {
 
 // InitProcesses starts processes based on ProcessConfigs
 func (it *Integration) InitProcesses(autoStart bool) error {
-	it.configSaveMutex = &sync.Mutex{}
+
 	if it.processConfigs == nil {
 		return errors.New("Load configurations first.")
 	}
