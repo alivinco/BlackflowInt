@@ -1,5 +1,5 @@
-hash: 68d5363e03ee5b3fa8d31d3c47693a2bcf74d3863dd88b0e83904e18873e312b
-updated: 2016-11-16T18:57:58.890923222+01:00
+hash: cc594b1cbab38c791496b74d63b8b02a0a26423c9c438e296ac0e5d4ac809b0b
+updated: 2016-11-24T11:41:18.37294675+01:00
 imports:
 - name: github.com/alivinco/iotmsglibgo
   version: ea3086694b54a1f611779f96f3fba3d6644cf89b
@@ -9,42 +9,82 @@ imports:
   version: 45f9b18f4864c81d49c3ed01e5faec9eeb05de31
   subpackages:
   - packets
+- name: github.com/fsnotify/fsnotify
+  version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
+- name: github.com/hashicorp/hcl
+  version: 7cb7455c285ca3bf3362aa4ba6a06a6d6f5c3ba0
+  subpackages:
+  - hcl/ast
+  - hcl/parser
+  - hcl/scanner
+  - hcl/strconv
+  - hcl/token
+  - json/parser
+  - json/scanner
+  - json/token
 - name: github.com/influxdata/influxdb
-  version: 4b9c88037fc5598267b8722d7ae4da6548b13663
+  version: b765a4b8c7d0c80deb6114d689c14024a7025623
   subpackages:
   - client/v2
   - models
   - pkg/escape
 - name: github.com/labstack/echo
-  version: f9e97332f3bebd2c26753f7dc679588a22cb387d
+  version: cd2530ea098106338b888f4fb66e966efa2fd75e
 - name: github.com/labstack/gommon
-  version: 2d272df536d051e737aea353b86c979d6e88bce0
+  version: 9a43ff0d261e0e65594422e9eee08cf301aabbe7
   subpackages:
   - color
   - log
+- name: github.com/magiconair/properties
+  version: 0723e352fa358f9322c938cc2dadda874e9151a9
 - name: github.com/mattn/go-colorable
   version: d228849504861217f796da67fae4f6e347643f15
 - name: github.com/mattn/go-isatty
   version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
 - name: github.com/miekg/dns
-  version: 58f52c57ce9df13460ac68200cef30a008b9c468
+  version: 271c58e0c14f552178ea321a545ff9af38930f39
+- name: github.com/mitchellh/mapstructure
+  version: f3009df150dadf309fdee4a54ed65c124afad715
+- name: github.com/pelletier/go-buffruneio
+  version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
+- name: github.com/pelletier/go-toml
+  version: 7cb988051d5045890cb91402a0b5fddc76c627bc
 - name: github.com/rsc/letsencrypt
   version: 76104d26167d38b6a0010f42bfc8ec5487742e8b
 - name: github.com/satori/go.uuid
   version: b061729afc07e77a8aa4fad0a2fd840958f1942a
 - name: github.com/Sirupsen/logrus
   version: d26492970760ca5d33129d2d799e34be5c4782eb
+- name: github.com/spf13/afero
+  version: 06b7e5f50606ecd49148a01a6008942d9b669217
+  subpackages:
+  - mem
+- name: github.com/spf13/cast
+  version: 24b6558033ffe202bf42f0f3b870dcc798dd2ba8
+- name: github.com/spf13/jwalterweatherman
+  version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
+- name: github.com/spf13/pflag
+  version: 5ccb023bc27df288a957c5e994cd44fd19619465
+- name: github.com/spf13/viper
+  version: 651d9d916abc3c3d6a91a12549495caba5edffd2
 - name: github.com/tylerb/graceful
-  version: 50a48b6e73fcc75b45e22c05b79629a67c79e938
+  version: 4df1190835320af7076dfcf27b3d071fd3612caf
 - name: github.com/valyala/fasttemplate
   version: 3b874956e03f1636d171bda64b130f9135f42cff
 - name: github.com/xenolf/lego
-  version: 9f86882f775f75f69617ecc160e39f4e0b7ae27f
+  version: 0abbd738a45af51595a214c52b02b18d16974f19
   subpackages:
   - acme
+- name: golang.org/x/text
+  version: b01949dc0793a9af5e4cb3fce4d42999e76e8ca1
+  subpackages:
+  - transform
+  - unicode/norm
 - name: gopkg.in/square/go-jose.v1
   version: aa2e30fdd1fe9dd3394119af66451ae790d50e0d
   subpackages:
   - cipher
   - json
+- name: gopkg.in/yaml.v2
+  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
 testImports: []

@@ -1,13 +1,11 @@
 +++
 title = "BasicAuth Middleware"
 description = "Basic auth middleware for Echo"
-[menu.side]
+[menu.main]
   name = "BasicAuth"
   parent = "middleware"
   weight = 5
 +++
-
-## BasicAuth Middleware
 
 BasicAuth middleware provides an HTTP basic authentication.
 
@@ -27,7 +25,7 @@ e.Use(middleware.BasicAuth(func(username, password string) bool {
 }))
 ```
 
-### Custom Configuration
+## Custom Configuration
 
 *Usage*
 
@@ -37,7 +35,7 @@ e.Use(middleware.BasicAuthWithConfig(middleware.BasicAuthConfig{},
 }))
 ```
 
-### Configuration
+## Configuration
 
 ```go
 BasicAuthConfig struct {

@@ -8,9 +8,12 @@ import (
 	"path/filepath"
 	"sync"
 
+	"fmt"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/alivinco/blackflowint/models"
 	"github.com/labstack/echo"
+	"github.com/spf13/viper"
 )
 
 // Integration is root level container
@@ -36,6 +39,7 @@ func (it *Integration) GetProcessByID(ID IDt) *Process {
 
 // GetDefaultIntegrConfig returns default config .
 func (it *Integration) GetDefaultIntegrConfig() []ProcessConfig {
+
 	selector := []Selector{
 		Selector{ID: 1, Topic: "*/jim1/evt*"},
 	}
@@ -56,31 +60,31 @@ func (it *Integration) GetDefaultIntegrConfig() []ProcessConfig {
 		Measurement{
 			Name: "sensor",
 			RetentionPolicyDuration: "8w",
-			RetentionPolicyName:     "sensor",
+			RetentionPolicyName:     "bf_sensor",
 		},
 		Measurement{
 			Name: "level",
 			RetentionPolicyDuration: "8w",
-			RetentionPolicyName:     "level",
+			RetentionPolicyName:     "bf_level",
 		},
 		Measurement{
 			Name: "binary",
 			RetentionPolicyDuration: "8w",
-			RetentionPolicyName:     "binary",
+			RetentionPolicyName:     "bf_binary",
 		},
 		Measurement{
 			Name: "default",
 			RetentionPolicyDuration: "8w",
-			RetentionPolicyName:     "default",
+			RetentionPolicyName:     "bf_default",
 		},
 	}
 
 	config := ProcessConfig{
 		ID:                 1,
-		MqttBrokerAddr:     "tcp://localhost:1883",
-		MqttBrokerUsername: "",
-		MqttBrokerPassword: "",
-		MqttClientID:       "blackflowint_sub_test",
+		MqttBrokerAddr:     "tcp://" + viper.GetString("mqtt_broker_addr"),
+		MqttBrokerUsername: viper.GetString("mqtt_username"),
+		MqttBrokerPassword: viper.GetString("mqtt_password"),
+		MqttClientID:       viper.GetString("mqtt_clientid") + "-1",
 		InfluxAddr:         "http://localhost:8086",
 		InfluxUsername:     "",
 		InfluxPassword:     "",
@@ -96,8 +100,26 @@ func (it *Integration) GetDefaultIntegrConfig() []ProcessConfig {
 
 }
 
+// BrokerAutoConfig configures broker using ENV variables set by BlackTowe
+func (it *Integration) BrokerAutoConfig(procID IDt) {
+	proc := it.GetProcessByID(procID)
+	proc.Config.MqttBrokerAddr = "tcp://" + viper.GetString("mqtt_broker_addr")
+	proc.Config.MqttBrokerUsername = viper.GetString("mqtt_username")
+	proc.Config.MqttBrokerPassword = viper.GetString("mqtt_password")
+	proc.Config.MqttClientID = fmt.Sprintf("%s-%d", viper.GetString("mqtt_clientid"), procID)
+	it.SaveConfigs()
+}
+
 // LoadConfig loads configs from json file and saves it into ProcessConfigs
 func (it *Integration) LoadConfig() error {
+	// ENV variables bindig.
+	viper.AutomaticEnv()
+	viper.SetEnvPrefix("zm")
+	viper.SetDefault("mqtt_broker_addr", "localhost:1883")
+	viper.SetDefault("mqtt_username", "")
+	viper.SetDefault("mqtt_password", "")
+	viper.SetDefault("mqtt_clientid", "bfint-influxdb")
+
 	if it.configSaveMutex == nil {
 		it.configSaveMutex = &sync.Mutex{}
 	}

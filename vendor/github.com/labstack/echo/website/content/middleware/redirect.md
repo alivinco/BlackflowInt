@@ -1,7 +1,7 @@
 +++
 title = "Redirect Middleware"
 description = "Redirect middleware for Echo"
-[menu.side]
+[menu.main]
   name = "Redirect"
   parent = "middleware"
   weight = 5
@@ -40,7 +40,7 @@ For example, http://www.labstack.com will be redirect to https://labstack.com.
 
 ```go
 e := echo.New()
-e.Pre(HTTPSNonWWWRedirect())
+e.Pre(middleware.HTTPSNonWWWRedirect())
 ```
 
 ## WWWRedirect Middleware
@@ -68,7 +68,7 @@ e := echo.New()
 e.Pre(middleware.NonWWWRedirect())
 ```
 
-### Custom Configuration
+## Custom Configuration
 
 *Usage*
 
@@ -81,7 +81,7 @@ e.Use(middleware.HTTPSRedirectWithConfig(middleware.RedirectConfig{
 
 Example above will redirect the request HTTP to HTTPS with status code `307 - StatusTemporaryRedirect`.
 
-### Configuration
+## Configuration
 
 ```go
 RedirectConfig struct {

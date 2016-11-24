@@ -29,9 +29,7 @@ Example:
     e.GET("/", hello)
 
     // Start server
-    if err := e.Start(":1323"); err != nil {
-      e.Logger.Fatal(err)
-    }
+    e.Logger.Fatal(e.Start(":1323"))
   }
 
 Learn more at https://echo.labstack.com
@@ -44,7 +42,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	slog "log"
+	"log"
 	"net/http"
 	"path"
 	"reflect"
@@ -461,7 +459,7 @@ func (e *Echo) Routes() []Route {
 }
 
 // AcquireContext returns an empty `Context` instance from the pool.
-// You must be return the context by calling `ReleaseContext()`.
+// You must return the context by calling `ReleaseContext()`.
 func (e *Echo) AcquireContext() Context {
 	return e.pool.Get().(Context)
 }
@@ -548,7 +546,7 @@ func (e *Echo) StartServer(s *http.Server) error {
 	gs := &graceful.Server{
 		Server:  s,
 		Timeout: e.ShutdownTimeout,
-		Logger:  slog.New(e.Logger.Output(), e.Logger.Prefix()+": ", 0),
+		Logger:  log.New(e.Logger.Output(), e.Logger.Prefix()+": ", 0),
 	}
 	if s.TLSConfig == nil {
 		e.server = gs

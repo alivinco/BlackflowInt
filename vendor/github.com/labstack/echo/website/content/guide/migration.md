@@ -1,15 +1,13 @@
 +++
 title = "Migration"
 description = "Migration"
-[menu.side]
+[menu.main]
   name = "Migration"
   parent = "guide"
   weight = 2
 +++
 
-## V3
-
-### Change Log
+## Change Log
 
 - Automatic TLS certificates via [Let's Encrypt](https://letsencrypt.org/)
 - Built-in support for graceful shutdown
@@ -47,4 +45,4 @@ description = "Migration"
 - Moved website and recipes to the main repo
 - Updated docs and fixed numerous issues
 
-### [Recipes](/recipes/hello-world)
+## [Recipes](/recipes/hello-world)

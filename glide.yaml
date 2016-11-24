@@ -4,9 +4,8 @@ ignore:
 - golang.org/x/sys
 - golang.org/x/time
 - golang.org/x/crypto
-
+- golang.org/x/text
 import:
-- package: github.com/eclipse/paho.mqtt.golang
 - package: github.com/eclipse/paho.mqtt.golang
   version: v1.0.0
 - package: github.com/alivinco/iotmsglibgo
@@ -17,3 +16,4 @@ import:
   - client/v2
 - package: github.com/labstack/echo
   version: ^3.0.1
+- package: github.com/spf13/viper

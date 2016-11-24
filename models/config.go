@@ -4,5 +4,6 @@ package models
 type MainConfig struct {
 	StorageLocation        string
 	AdminRestAPIBindAddres string
+	LogLevel               string
 	LogPath                string
 }

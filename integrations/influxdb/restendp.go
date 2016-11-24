@@ -9,10 +9,14 @@ import (
 	"github.com/labstack/echo"
 )
 
-type Response struct {
+type DefaultResponse struct {
 	ID   IDt
 	Code int
 	Msg  string
+}
+
+type ProcCtlRequest struct {
+	Action string
 }
 
 type IntegrationAPIRestEndp struct {
@@ -31,6 +35,31 @@ func (endp *IntegrationAPIRestEndp) SetupRoutes() {
 	endp.Echo.PUT("/blackflowint/influxdb/api/proc/:id/selectors", endp.addSelectorEndpoint)
 	endp.Echo.DELETE("/blackflowint/influxdb/api/proc/:id/selectors/:sid", endp.removeSelectorEndpoint)
 }
+func (endp *IntegrationAPIRestEndp) ctlProcessEndpoint(c echo.Context) error {
+	req := ProcCtlRequest{}
+	procID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return err
+	}
+	if err = c.Bind(&req); err != nil {
+		return err
+	}
+	switch req.Action {
+	case "start":
+		err = endp.integr.GetProcessByID(IDt(procID)).Start()
+		break
+	case "stop":
+		err = endp.integr.GetProcessByID(IDt(procID)).Stop()
+		break
+	case "broker_auto_config":
+		endp.integr.BrokerAutoConfig(IDt(procID))
+		break
+	}
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, DefaultResponse{ID: IDt(procID), Msg: "Action executed"})
+}
 
 func (endp *IntegrationAPIRestEndp) addFilterEndpoint(c echo.Context) error {
 	filter := Filter{}
@@ -44,7 +73,7 @@ func (endp *IntegrationAPIRestEndp) addFilterEndpoint(c echo.Context) error {
 	proc := endp.integr.GetProcessByID(IDt(procID))
 	newID := proc.AddFilter(filter)
 	endp.integr.SaveConfigs()
-	return c.JSON(http.StatusOK, Response{ID: newID, Msg: "Filter added."})
+	return c.JSON(http.StatusOK, DefaultResponse{ID: newID, Msg: "Filter added."})
 }
 func (endp *IntegrationAPIRestEndp) removeFilterEndpoint(c echo.Context) error {
 	procID, err := strconv.Atoi(c.Param("id"))
@@ -58,7 +87,7 @@ func (endp *IntegrationAPIRestEndp) removeFilterEndpoint(c echo.Context) error {
 	proc := endp.integr.GetProcessByID(IDt(procID))
 	proc.RemoveFilter(IDt(filterID))
 	endp.integr.SaveConfigs()
-	return c.JSON(http.StatusOK, Response{ID: IDt(procID), Msg: "Filter removed."})
+	return c.JSON(http.StatusOK, DefaultResponse{ID: IDt(procID), Msg: "Filter removed."})
 }
 func (endp *IntegrationAPIRestEndp) getProcessEndpoint(c echo.Context) error {
 	resp := []ProcessConfig{}
@@ -127,7 +156,7 @@ func (endp *IntegrationAPIRestEndp) addSelectorEndpoint(c echo.Context) error {
 	proc := endp.integr.GetProcessByID(IDt(procID))
 	newID := proc.AddSelector(selector)
 	endp.integr.SaveConfigs()
-	return c.JSON(http.StatusOK, Response{ID: newID, Msg: "Selector added."})
+	return c.JSON(http.StatusOK, DefaultResponse{ID: newID, Msg: "Selector added."})
 }
 func (endp *IntegrationAPIRestEndp) removeSelectorEndpoint(c echo.Context) error {
 	procID, err := strconv.Atoi(c.Param("id"))
@@ -141,11 +170,9 @@ func (endp *IntegrationAPIRestEndp) removeSelectorEndpoint(c echo.Context) error
 	proc := endp.integr.GetProcessByID(IDt(procID))
 	proc.RemoveSelector(IDt(selectorID))
 	endp.integr.SaveConfigs()
-	return c.JSON(http.StatusOK, Response{ID: IDt(procID), Msg: "Selector removed."})
+	return c.JSON(http.StatusOK, DefaultResponse{ID: IDt(procID), Msg: "Selector removed."})
 }
-func (endp *IntegrationAPIRestEndp) ctlProcessEndpoint(c echo.Context) error {
-	return nil
-}
+
 func (endp *IntegrationAPIRestEndp) addProcessEndpoint(c echo.Context) error {
 	return nil
 }

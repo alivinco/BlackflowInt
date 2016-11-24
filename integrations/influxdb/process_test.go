@@ -24,22 +24,22 @@ func Setup() {
 		Measurement{
 			Name: "sensor",
 			RetentionPolicyDuration: "4w",
-			RetentionPolicyName:     "sensor",
+			RetentionPolicyName:     "bf_sensor",
 		},
 		Measurement{
 			Name: "level",
 			RetentionPolicyDuration: "4w",
-			RetentionPolicyName:     "level",
+			RetentionPolicyName:     "bf_level",
 		},
 		Measurement{
 			Name: "binary",
 			RetentionPolicyDuration: "4w",
-			RetentionPolicyName:     "binary",
+			RetentionPolicyName:     "bf_binary",
 		},
 		Measurement{
 			Name: "default",
 			RetentionPolicyDuration: "4w",
-			RetentionPolicyName:     "default",
+			RetentionPolicyName:     "bf_default",
 		},
 	}
 }
@@ -75,7 +75,7 @@ func CleanUpDB(influxC influx.Client, config *ProcessConfig) {
 }
 
 func Count(influxC influx.Client, config *ProcessConfig) int {
-	q := influx.NewQuery(fmt.Sprintf("select count(value) from sensor.sensor"), config.InfluxDB, "")
+	q := influx.NewQuery(fmt.Sprintf("select count(value) from bf_sensor.sensor"), config.InfluxDB, "")
 	if response, err := influxC.Query(q); err == nil && response.Error() == nil {
 		if len(response.Results[0].Series) > 0 {
 			countN, ok := response.Results[0].Series[0].Values[0][1].(json.Number)

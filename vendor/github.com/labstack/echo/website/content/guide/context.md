@@ -1,21 +1,19 @@
 +++
 title = "Context"
 description = "Context in Echo"
-[menu.side]
+[menu.main]
   name = "Context"
   identifier = "context"
   parent = "guide"
   weight = 5
 +++
 
-## Context
-
 `echo.Context` represents the context of the current HTTP request. It holds request and
 response reference, path, path parameters, data, registered handler and APIs to read
 request and write response. As Context is an interface, it is easy to extend it with
 custom APIs.
 
-#### Extending Context
+## Extending Context
 
 **Define a custom context**
 

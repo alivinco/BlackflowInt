@@ -55,13 +55,13 @@ func (pr *Process) Init() error {
 	log.Info("Setting up retention policies")
 	for _, mes := range pr.GetMeasurements() {
 		if mes.RetentionPolicyName == "" {
-			mes.RetentionPolicyName = mes.Name
+			mes.RetentionPolicyName = fmt.Sprintf("bf_%s", mes.Name)
 		}
 		q := influx.NewQuery(fmt.Sprintf("CREATE RETENTION POLICY %s ON %s DURATION %s REPLICATION 1", mes.RetentionPolicyName, pr.Config.InfluxDB, mes.RetentionPolicyDuration), pr.Config.InfluxDB, "")
 		if response, err := pr.influxC.Query(q); err == nil && response.Error() == nil {
 			log.Infof("Retencion policy %s was created with status :%s", mes.RetentionPolicyName, response.Results)
 		} else {
-			log.Errorf("Configuration of retention policy %s failed with status : %s ", mes.RetentionPolicyName, response.Err)
+			log.Errorf("Configuration of retention policy %s failed with status : %s ", mes.RetentionPolicyName, response.Error())
 		}
 	}
 
@@ -268,7 +268,7 @@ func (pr *Process) Start() error {
 
 // Stop stops the process by unsubscribing from all topics ,
 // stops scheduler and stops adapter.
-func (pr *Process) Stop() {
+func (pr *Process) Stop() error {
 	pr.ticker.Stop()
 
 	for _, selector := range pr.Config.Selectors {
@@ -277,5 +277,5 @@ func (pr *Process) Stop() {
 	pr.influxC.Close()
 	pr.mqttAdapter.Stop()
 	pr.State = "STOPPED"
-
+	return nil
 }
