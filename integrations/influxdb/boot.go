@@ -113,8 +113,6 @@ func (it *Integration) BrokerAutoConfig(procID IDt) {
 // LoadConfig loads configs from json file and saves it into ProcessConfigs
 func (it *Integration) LoadConfig() error {
 	// ENV variables bindig.
-	viper.AutomaticEnv()
-	viper.SetEnvPrefix("zm")
 	viper.SetDefault("mqtt_broker_addr", "localhost:1883")
 	viper.SetDefault("mqtt_username", "")
 	viper.SetDefault("mqtt_password", "")
@@ -170,14 +168,19 @@ func (it *Integration) InitProcesses(autoStart bool) error {
 	}
 	for i := range it.processConfigs {
 		proc := NewProcess(&it.processConfigs[i])
-		proc.Init()
-		log.Infof("Process ID=%d was initialized.", it.processConfigs[i].ID)
-		if autoStart {
-			err := proc.Start()
-			if err != nil {
-				log.Errorf("Process ID=%d failed to start . Error : %s", it.processConfigs[i], err)
+		err := proc.Init()
+		if err == nil {
+			log.Infof("Process ID=%d was initialized.", it.processConfigs[i].ID)
+			if autoStart {
+				err := proc.Start()
+				if err != nil {
+					log.Errorf("Process ID=%d failed to start . Error : %s", it.processConfigs[i], err)
+				}
 			}
+		} else {
+			log.Errorf("Initialization of Process ID=%d FAILED .", it.processConfigs[i].ID)
 		}
+
 		it.processes = append(it.processes, proc)
 	}
 	return nil

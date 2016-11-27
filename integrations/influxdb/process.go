@@ -23,6 +23,7 @@ type Process struct {
 	apiMutex    *sync.Mutex
 	transform   Transform
 	State       string
+	LastError   string
 }
 
 // NewProcess is a constructor
@@ -36,6 +37,7 @@ func NewProcess(config *ProcessConfig) *Process {
 // Init doing the process bootrstrap .
 func (pr *Process) Init() error {
 	var err error
+	pr.State = "STOPPED"
 	log.Info("Initializing influx client.")
 	pr.influxC, err = influx.NewHTTPClient(influx.HTTPConfig{
 		Addr:     pr.Config.InfluxAddr, //"http://localhost:8086",
@@ -47,9 +49,13 @@ func (pr *Process) Init() error {
 		return err
 	}
 	// Creating database
+	log.Info("Setting up database")
 	q := influx.NewQuery(fmt.Sprintf("CREATE DATABASE %s", pr.Config.InfluxDB), "", "")
 	if response, err := pr.influxC.Query(q); err == nil && response.Error() == nil {
 		log.Infof("Database %s was created with status :%s", pr.Config.InfluxDB, response.Results)
+	} else {
+		pr.LastError = "InfluxDB is not reachable .Check connetion parameters."
+		return err
 	}
 	// Setting up retention policies
 	log.Info("Setting up retention policies")

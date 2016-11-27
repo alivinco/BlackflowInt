@@ -1,2 +1,3 @@
 StorageLocation = "./"
-AdminRestAPIBindAddres = ":8091"
+AdminRestAPIBindAddres = ":5015"
+LogLevel = "info"

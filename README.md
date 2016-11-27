@@ -2,6 +2,32 @@
 
 ### The application is container for blackflow integrations . 
 
+#### BlackflowInt application config :
+
+The application can be configured either using -c flag with config file location or using ENV variables instead . 
+
+-c should point to folder where config file resides , config file should have a name blackflowint.toml
+
+Start application using config file : 
+```
+blackflowint -c ./
+``` 
+
+
+
+
+```
+type MainConfig struct {
+	StorageLocation        string
+	AdminRestAPIBindAddres string
+	LogPath                string
+	LogPath                string
+}
+
+```
+
+
+
 #### Integrations : 
 
 - MQTT event stream dump into InfluxDB
@@ -173,13 +199,3 @@ type MsgContext struct {
 
 ```
 
-BlackflowInt global config :
-
-```
-type MainConfig struct {
-	StorageLocation        string
-	AdminRestAPIBindAddres string
-	LogPath                string
-}
-
-```

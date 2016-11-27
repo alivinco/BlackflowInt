@@ -75,11 +75,6 @@ imports:
   version: 0abbd738a45af51595a214c52b02b18d16974f19
   subpackages:
   - acme
-- name: golang.org/x/text
-  version: b01949dc0793a9af5e4cb3fce4d42999e76e8ca1
-  subpackages:
-  - transform
-  - unicode/norm
 - name: gopkg.in/square/go-jose.v1
   version: aa2e30fdd1fe9dd3394119af66451ae790d50e0d
   subpackages:
