@@ -27,6 +27,7 @@ type IntegrationAPIRestEndp struct {
 func (endp *IntegrationAPIRestEndp) SetupRoutes() {
 	endp.Echo.GET("/blackflowint/influxdb/api/proc/:id", endp.getProcessEndpoint)
 	endp.Echo.PUT("/blackflowint/influxdb/api/proc", endp.addProcessEndpoint)
+	endp.Echo.PUT("/blackflowint/influxdb/api/proc/:id", endp.updateProcessConfigEndpoint)
 	endp.Echo.POST("/blackflowint/influxdb/api/proc/:id/ctl", endp.ctlProcessEndpoint)
 	endp.Echo.GET("/blackflowint/influxdb/api/proc/:id/filters", endp.getFiltersEndpoint)
 	endp.Echo.PUT("/blackflowint/influxdb/api/proc/:id/filters", endp.addFilterEndpoint)
@@ -54,6 +55,9 @@ func (endp *IntegrationAPIRestEndp) ctlProcessEndpoint(c echo.Context) error {
 	case "broker_auto_config":
 		endp.integr.BrokerAutoConfig(IDt(procID))
 		break
+	case "state":
+		return c.JSON(http.StatusOK, DefaultResponse{ID: IDt(procID), Msg: endp.integr.GetProcessByID(IDt(procID)).State})
+
 	}
 	if err != nil {
 		return err
@@ -174,8 +178,35 @@ func (endp *IntegrationAPIRestEndp) removeSelectorEndpoint(c echo.Context) error
 }
 
 func (endp *IntegrationAPIRestEndp) addProcessEndpoint(c echo.Context) error {
-	return nil
+	procConf := ProcessConfig{}
+	if err := c.Bind(&procConf); err != nil {
+		return err
+	}
+	newID, err := endp.integr.AddProcess(procConf, true)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, DefaultResponse{ID: newID, Msg: "Project added."})
+}
+func (endp *IntegrationAPIRestEndp) updateProcessConfigEndpoint(c echo.Context) error {
+	procConf := ProcessConfig{}
+	procID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return err
+	}
+	if err := c.Bind(&procConf); err != nil {
+		return err
+	}
+	err = endp.integr.GetProcessByID(IDt(procID)).Configure(procConf, false)
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, DefaultResponse{ID: IDt(procID), Msg: "Project reconfigured."})
 }
 func (endp *IntegrationAPIRestEndp) removeProcessEndpoint(c echo.Context) error {
-	return nil
+	procID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, DefaultResponse{ID: IDt(procID), Msg: "Project removed."})
 }

@@ -13,7 +13,10 @@ Start application using config file :
 blackflowint -c ./
 ``` 
 
-
+Supported ENV variables : 
+- ZM_LOGLEVEL="info"
+- ZM_STORAGELOCATION="/var/lib/blackflowint"
+- ZM_ADMINRESTAPIBINDADDRES=":5015"
 
 
 ```

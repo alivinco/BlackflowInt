@@ -88,7 +88,7 @@ func (it *Integration) GetDefaultIntegrConfig() []ProcessConfig {
 		InfluxAddr:         "http://localhost:8086",
 		InfluxUsername:     "",
 		InfluxPassword:     "",
-		InfluxDB:           "iotmsg_test",
+		InfluxDB:           "iotmsg",
 		BatchMaxSize:       1000,
 		SaveInterval:       1000,
 		Filters:            filters,
@@ -100,7 +100,12 @@ func (it *Integration) GetDefaultIntegrConfig() []ProcessConfig {
 
 }
 
-// BrokerAutoConfig configures broker using ENV variables set by BlackTowe
+// Init initilizes integration app
+func (it *Integration) Init() {
+	it.storeFullPath = filepath.Join(it.StoreLocation, it.Name+".json")
+}
+
+// BrokerAutoConfig configures broker using ENV variables set by BlackTower
 func (it *Integration) BrokerAutoConfig(procID IDt) {
 	proc := it.GetProcessByID(procID)
 	proc.Config.MqttBrokerAddr = "tcp://" + viper.GetString("mqtt_broker_addr")
@@ -110,7 +115,18 @@ func (it *Integration) BrokerAutoConfig(procID IDt) {
 	it.SaveConfigs()
 }
 
-// LoadConfig loads configs from json file and saves it into ProcessConfigs
+// SetConfig config setter
+func (it *Integration) SetConfig(processConfigs []ProcessConfig) {
+	it.processConfigs = processConfigs
+}
+
+// UpdateProcConfig update process configurations
+func (it *Integration) UpdateProcConfig(ID IDt, procConfig ProcessConfig) {
+	proc := it.GetProcessByID(ID)
+	proc.Configure(procConfig)
+}
+
+// LoadConfig loads integration configs from json file and saves it into ProcessConfigs
 func (it *Integration) LoadConfig() error {
 	// ENV variables bindig.
 	viper.SetDefault("mqtt_broker_addr", "localhost:1883")
@@ -149,51 +165,97 @@ func (it *Integration) SaveConfigs() error {
 	// 		}
 	// 	}
 	// }
-	it.configSaveMutex.Lock()
-	defer func() {
-		it.configSaveMutex.Unlock()
-	}()
-	payload, err := json.Marshal(it.processConfigs)
-	if err != nil {
-		return err
+	if it.StoreLocation != "" {
+
+		it.configSaveMutex.Lock()
+		defer func() {
+			it.configSaveMutex.Unlock()
+		}()
+		payload, err := json.Marshal(it.processConfigs)
+		if err != nil {
+			return err
+		}
+		return ioutil.WriteFile(it.storeFullPath, payload, 0777)
+
 	}
-	return ioutil.WriteFile(it.storeFullPath, payload, 0777)
+	log.Info("Save to disk was skipped , StoreLocation is empty")
+	return nil
 }
 
-// InitProcesses starts processes based on ProcessConfigs
+// InitProcesses loads and starts ALL processes based on ProcessConfigs
 func (it *Integration) InitProcesses(autoStart bool) error {
-
 	if it.processConfigs == nil {
 		return errors.New("Load configurations first.")
 	}
 	for i := range it.processConfigs {
-		proc := NewProcess(&it.processConfigs[i])
-		err := proc.Init()
-		if err == nil {
-			log.Infof("Process ID=%d was initialized.", it.processConfigs[i].ID)
-			if autoStart {
-				err := proc.Start()
-				if err != nil {
-					log.Errorf("Process ID=%d failed to start . Error : %s", it.processConfigs[i], err)
-				}
-			}
-		} else {
-			log.Errorf("Initialization of Process ID=%d FAILED .", it.processConfigs[i].ID)
-		}
-
-		it.processes = append(it.processes, proc)
+		it.InitNewProcess(&it.processConfigs[i], autoStart)
 	}
 	return nil
+}
+
+// InitNewProcess initialize and start single process
+func (it *Integration) InitNewProcess(procConfig *ProcessConfig, autoStart bool) error {
+	proc := NewProcess(procConfig)
+	err := proc.Init()
+	if err == nil {
+		log.Infof("Process ID=%d was initialized.", procConfig.ID)
+		if autoStart {
+			err := proc.Start()
+			if err != nil {
+				log.Errorf("Process ID=%d failed to start . Error : %s", procConfig, err)
+			}
+		}
+	} else {
+		log.Errorf("Initialization of Process ID=%d FAILED .", procConfig.ID)
+		return err
+	}
+	it.processes = append(it.processes, proc)
+	return nil
+}
+
+// AddProcess adds new process .
+func (it *Integration) AddProcess(procConfig ProcessConfig, autoStart bool) (IDt, error) {
+	procConfig.ID = GetNewID(procConfig)
+	it.processConfigs = append(it.processConfigs, procConfig)
+	it.SaveConfigs()
+	return procConfig.ID, it.InitNewProcess(&procConfig, autoStart)
+}
+
+// RemoveProcess stops process , removes it from config file and removes instance .
+func (it *Integration) RemoveProcess(ID IDt) error {
+	var err error
+	// removing process instance
+	for i := range it.processes {
+		if it.processes[i].Config.ID == ID {
+			err = it.processes[i].Stop()
+			it.processes = append(it.processes[:i], it.processes[i+1:]...)
+			break
+		}
+	}
+	// removing from config file
+	for ic := range it.processConfigs {
+		if it.processConfigs[ic].ID == ID {
+			it.processConfigs = append(it.processConfigs[:ic], it.processConfigs[ic+1:]...)
+			break
+		}
+	}
+	if err == nil {
+		it.SaveConfigs()
+
+	}
+	return err
 }
 
 // Boot initializes integration
 func Boot(mainConfig *models.MainConfig, restHandler *echo.Echo) *Integration {
 	log.Info("Booting InfluxDB integration ")
 	integr := Integration{Name: "influxdb", StoreLocation: mainConfig.StorageLocation}
-	integr.storeFullPath = filepath.Join(integr.StoreLocation, integr.Name+".json")
+	integr.Init()
 	integr.LoadConfig()
 	integr.InitProcesses(true)
-	restAPI := IntegrationAPIRestEndp{&integr, restHandler}
-	restAPI.SetupRoutes()
+	if restHandler != nil {
+		restAPI := IntegrationAPIRestEndp{&integr, restHandler}
+		restAPI.SetupRoutes()
+	}
 	return &integr
 }

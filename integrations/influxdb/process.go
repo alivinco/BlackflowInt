@@ -195,9 +195,15 @@ func (pr *Process) write(context *MsgContext, point *influx.Point) {
 
 // Configure should be used to replace new set of filters and selectors with new set .
 // Process should be restarted after Configure call
-func (pr *Process) Configure(selectors []Selector, filters []Filter) {
-	pr.Config.Selectors = selectors
-	pr.Config.Filters = filters
+func (pr *Process) Configure(procConfig ProcessConfig, doRestart bool) error {
+	// pr.Config.Selectors = selectors
+	// pr.Config.Filters = filters
+	pr.Config = &procConfig
+	if doRestart {
+		pr.Stop()
+		return pr.Start()
+	}
+	return nil
 }
 
 // InitBatchPoint initializes new batch point or resets existing one .
@@ -267,7 +273,7 @@ func (pr *Process) Start() error {
 	for _, selector := range pr.Config.Selectors {
 		pr.mqttAdapter.Subscribe(selector.Topic, 0)
 	}
-	pr.State = "STARTED"
+	pr.State = "RUNNING"
 	return nil
 
 }
