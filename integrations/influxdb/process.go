@@ -198,7 +198,7 @@ func (pr *Process) write(context *MsgContext, point *influx.Point) {
 func (pr *Process) Configure(procConfig ProcessConfig, doRestart bool) error {
 	// pr.Config.Selectors = selectors
 	// pr.Config.Filters = filters
-	pr.Config = &procConfig
+	*pr.Config = procConfig
 	if doRestart {
 		pr.Stop()
 		return pr.Start()

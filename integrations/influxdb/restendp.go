@@ -19,6 +19,14 @@ type ProcCtlRequest struct {
 	Action string
 }
 
+type ProcMonitoringResp struct {
+	ProcID    IDt
+	ProcName  string
+	State     string
+	LastError string
+}
+
+// IntegrationAPIRestEndp admin REST api implementation
 type IntegrationAPIRestEndp struct {
 	integr *Integration
 	Echo   *echo.Echo
@@ -26,8 +34,10 @@ type IntegrationAPIRestEndp struct {
 
 func (endp *IntegrationAPIRestEndp) SetupRoutes() {
 	endp.Echo.GET("/blackflowint/influxdb/api/proc/:id", endp.getProcessEndpoint)
+	endp.Echo.GET("/blackflowint/influxdb/api/proc/monitoring", endp.procMonitoringEndpoint)
+	endp.Echo.DELETE("/blackflowint/influxdb/api/proc/:id", endp.removeProcessEndpoint)
 	endp.Echo.PUT("/blackflowint/influxdb/api/proc", endp.addProcessEndpoint)
-	endp.Echo.PUT("/blackflowint/influxdb/api/proc/:id", endp.updateProcessConfigEndpoint)
+	endp.Echo.POST("/blackflowint/influxdb/api/proc/:id", endp.updateProcessConfigEndpoint)
 	endp.Echo.POST("/blackflowint/influxdb/api/proc/:id/ctl", endp.ctlProcessEndpoint)
 	endp.Echo.GET("/blackflowint/influxdb/api/proc/:id/filters", endp.getFiltersEndpoint)
 	endp.Echo.PUT("/blackflowint/influxdb/api/proc/:id/filters", endp.addFilterEndpoint)
@@ -37,6 +47,7 @@ func (endp *IntegrationAPIRestEndp) SetupRoutes() {
 	endp.Echo.DELETE("/blackflowint/influxdb/api/proc/:id/selectors/:sid", endp.removeSelectorEndpoint)
 }
 func (endp *IntegrationAPIRestEndp) ctlProcessEndpoint(c echo.Context) error {
+	log.Info("ctlProcessEndpoint")
 	req := ProcCtlRequest{}
 	procID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -45,18 +56,22 @@ func (endp *IntegrationAPIRestEndp) ctlProcessEndpoint(c echo.Context) error {
 	if err = c.Bind(&req); err != nil {
 		return err
 	}
+	proc := endp.integr.GetProcessByID(IDt(procID))
+	if proc == nil {
+		return c.JSON(http.StatusOK, DefaultResponse{ID: IDt(procID), Msg: "Process doesn't exist."})
+	}
 	switch req.Action {
 	case "start":
-		err = endp.integr.GetProcessByID(IDt(procID)).Start()
+		err = proc.Start()
 		break
 	case "stop":
-		err = endp.integr.GetProcessByID(IDt(procID)).Stop()
+		err = proc.Stop()
 		break
 	case "broker_auto_config":
 		endp.integr.BrokerAutoConfig(IDt(procID))
 		break
 	case "state":
-		return c.JSON(http.StatusOK, DefaultResponse{ID: IDt(procID), Msg: endp.integr.GetProcessByID(IDt(procID)).State})
+		return c.JSON(http.StatusOK, DefaultResponse{ID: IDt(procID), Msg: proc.State})
 
 	}
 	if err != nil {
@@ -65,7 +80,23 @@ func (endp *IntegrationAPIRestEndp) ctlProcessEndpoint(c echo.Context) error {
 	return c.JSON(http.StatusOK, DefaultResponse{ID: IDt(procID), Msg: "Action executed"})
 }
 
+func (endp *IntegrationAPIRestEndp) procMonitoringEndpoint(c echo.Context) error {
+	log.Info("procMonitoringEndpoint")
+	procMonitor := []ProcMonitoringResp{}
+	for i := range endp.integr.processes {
+		procMonitorResp := ProcMonitoringResp{
+			endp.integr.processes[i].Config.ID,
+			endp.integr.processes[i].Config.Name,
+			endp.integr.processes[i].State,
+			endp.integr.processes[i].LastError,
+		}
+		procMonitor = append(procMonitor, procMonitorResp)
+	}
+	return c.JSON(http.StatusOK, procMonitor)
+}
+
 func (endp *IntegrationAPIRestEndp) addFilterEndpoint(c echo.Context) error {
+	log.Info("addFilterEndpoint")
 	filter := Filter{}
 	procID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -80,6 +111,8 @@ func (endp *IntegrationAPIRestEndp) addFilterEndpoint(c echo.Context) error {
 	return c.JSON(http.StatusOK, DefaultResponse{ID: newID, Msg: "Filter added."})
 }
 func (endp *IntegrationAPIRestEndp) removeFilterEndpoint(c echo.Context) error {
+	log.Info("removeFilterEndpoint")
+	// filter := Filter{}
 	procID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return err
@@ -94,6 +127,7 @@ func (endp *IntegrationAPIRestEndp) removeFilterEndpoint(c echo.Context) error {
 	return c.JSON(http.StatusOK, DefaultResponse{ID: IDt(procID), Msg: "Filter removed."})
 }
 func (endp *IntegrationAPIRestEndp) getProcessEndpoint(c echo.Context) error {
+	log.Info("getProcessEndpoint")
 	resp := []ProcessConfig{}
 	// var procID IDt
 	// var err error
@@ -112,6 +146,7 @@ func (endp *IntegrationAPIRestEndp) getProcessEndpoint(c echo.Context) error {
 	return c.JSON(http.StatusCreated, resp)
 }
 func (endp *IntegrationAPIRestEndp) getFiltersEndpoint(c echo.Context) error {
+	log.Info("getFiltersEndpoint")
 	resp := []Filter{}
 	// var procID IDt
 	// var err error
@@ -131,6 +166,7 @@ func (endp *IntegrationAPIRestEndp) getFiltersEndpoint(c echo.Context) error {
 	// return nil
 }
 func (endp *IntegrationAPIRestEndp) getSelectorsEndpoint(c echo.Context) error {
+	log.Info("getSelectorssEndpoint")
 	resp := []Selector{}
 	// var procID IDt
 	// var err error
@@ -149,6 +185,7 @@ func (endp *IntegrationAPIRestEndp) getSelectorsEndpoint(c echo.Context) error {
 	return c.JSON(http.StatusCreated, resp)
 }
 func (endp *IntegrationAPIRestEndp) addSelectorEndpoint(c echo.Context) error {
+	log.Info("addSelectorEndpoint")
 	selector := Selector{}
 	procID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -163,6 +200,7 @@ func (endp *IntegrationAPIRestEndp) addSelectorEndpoint(c echo.Context) error {
 	return c.JSON(http.StatusOK, DefaultResponse{ID: newID, Msg: "Selector added."})
 }
 func (endp *IntegrationAPIRestEndp) removeSelectorEndpoint(c echo.Context) error {
+	log.Info("removeSelectorEndpoint")
 	procID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		return err
@@ -178,6 +216,7 @@ func (endp *IntegrationAPIRestEndp) removeSelectorEndpoint(c echo.Context) error
 }
 
 func (endp *IntegrationAPIRestEndp) addProcessEndpoint(c echo.Context) error {
+	log.Info("addProcessEndpoint")
 	procConf := ProcessConfig{}
 	if err := c.Bind(&procConf); err != nil {
 		return err
@@ -189,6 +228,7 @@ func (endp *IntegrationAPIRestEndp) addProcessEndpoint(c echo.Context) error {
 	return c.JSON(http.StatusOK, DefaultResponse{ID: newID, Msg: "Project added."})
 }
 func (endp *IntegrationAPIRestEndp) updateProcessConfigEndpoint(c echo.Context) error {
+	log.Info("updateProcessConfigEndpoint")
 	procConf := ProcessConfig{}
 	procID, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -197,14 +237,20 @@ func (endp *IntegrationAPIRestEndp) updateProcessConfigEndpoint(c echo.Context) 
 	if err := c.Bind(&procConf); err != nil {
 		return err
 	}
-	err = endp.integr.GetProcessByID(IDt(procID)).Configure(procConf, false)
+	procConf.ID = IDt(procID)
+	err = endp.integr.UpdateProcConfig(IDt(procID), procConf, false)
 	if err != nil {
 		return err
 	}
 	return c.JSON(http.StatusOK, DefaultResponse{ID: IDt(procID), Msg: "Project reconfigured."})
 }
 func (endp *IntegrationAPIRestEndp) removeProcessEndpoint(c echo.Context) error {
+	log.Info("removeProcessEndpoint")
 	procID, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		return err
+	}
+	err = endp.integr.RemoveProcess(IDt(procID))
 	if err != nil {
 		return err
 	}

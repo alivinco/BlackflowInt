@@ -121,9 +121,14 @@ func (it *Integration) SetConfig(processConfigs []ProcessConfig) {
 }
 
 // UpdateProcConfig update process configurations
-func (it *Integration) UpdateProcConfig(ID IDt, procConfig ProcessConfig) {
+func (it *Integration) UpdateProcConfig(ID IDt, procConfig ProcessConfig, doRestart bool) error {
 	proc := it.GetProcessByID(ID)
-	proc.Configure(procConfig)
+	err := proc.Configure(procConfig, doRestart)
+	if err != nil {
+		return err
+	}
+	err = it.SaveConfigs()
+	return err
 }
 
 // LoadConfig loads integration configs from json file and saves it into ProcessConfigs
@@ -196,6 +201,7 @@ func (it *Integration) InitProcesses(autoStart bool) error {
 // InitNewProcess initialize and start single process
 func (it *Integration) InitNewProcess(procConfig *ProcessConfig, autoStart bool) error {
 	proc := NewProcess(procConfig)
+	it.processes = append(it.processes, proc)
 	err := proc.Init()
 	if err == nil {
 		log.Infof("Process ID=%d was initialized.", procConfig.ID)
@@ -209,13 +215,12 @@ func (it *Integration) InitNewProcess(procConfig *ProcessConfig, autoStart bool)
 		log.Errorf("Initialization of Process ID=%d FAILED .", procConfig.ID)
 		return err
 	}
-	it.processes = append(it.processes, proc)
 	return nil
 }
 
 // AddProcess adds new process .
 func (it *Integration) AddProcess(procConfig ProcessConfig, autoStart bool) (IDt, error) {
-	procConfig.ID = GetNewID(procConfig)
+	procConfig.ID = GetNewID(it.processConfigs)
 	it.processConfigs = append(it.processConfigs, procConfig)
 	it.SaveConfigs()
 	return procConfig.ID, it.InitNewProcess(&procConfig, autoStart)
