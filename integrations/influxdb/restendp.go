@@ -143,7 +143,7 @@ func (endp *IntegrationAPIRestEndp) getProcessEndpoint(c echo.Context) error {
 		}
 
 	}
-	return c.JSON(http.StatusCreated, resp)
+	return c.JSON(http.StatusOK, resp)
 }
 func (endp *IntegrationAPIRestEndp) getFiltersEndpoint(c echo.Context) error {
 	log.Info("getFiltersEndpoint")
@@ -182,7 +182,7 @@ func (endp *IntegrationAPIRestEndp) getSelectorsEndpoint(c echo.Context) error {
 		}
 
 	}
-	return c.JSON(http.StatusCreated, resp)
+	return c.JSON(http.StatusOK, resp)
 }
 func (endp *IntegrationAPIRestEndp) addSelectorEndpoint(c echo.Context) error {
 	log.Info("addSelectorEndpoint")
@@ -221,7 +221,7 @@ func (endp *IntegrationAPIRestEndp) addProcessEndpoint(c echo.Context) error {
 	if err := c.Bind(&procConf); err != nil {
 		return err
 	}
-	newID, err := endp.integr.AddProcess(procConf, true)
+	newID, err := endp.integr.AddProcess(procConf)
 	if err != nil {
 		return err
 	}

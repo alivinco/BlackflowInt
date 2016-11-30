@@ -162,14 +162,6 @@ func (it *Integration) LoadConfig() error {
 
 // SaveConfigs saves configs to json file
 func (it *Integration) SaveConfigs() error {
-	// for _, prc := range it.processes {
-	// 	for _, prcConf := range it.processConfigs {
-	// 		if prc.Config.ID == prcConf.ID {
-	// 			prcConf.Filters = prc.GetFilters()
-	// 			prcConf.Selectors = prc.GetSelectors()
-	// 		}
-	// 	}
-	// }
 	if it.StoreLocation != "" {
 
 		it.configSaveMutex.Lock()
@@ -188,42 +180,54 @@ func (it *Integration) SaveConfigs() error {
 }
 
 // InitProcesses loads and starts ALL processes based on ProcessConfigs
-func (it *Integration) InitProcesses(autoStart bool) error {
+func (it *Integration) InitProcesses() error {
 	if it.processConfigs == nil {
 		return errors.New("Load configurations first.")
 	}
 	for i := range it.processConfigs {
-		it.InitNewProcess(&it.processConfigs[i], autoStart)
+		it.InitNewProcess(&it.processConfigs[i])
 	}
 	return nil
 }
 
 // InitNewProcess initialize and start single process
-func (it *Integration) InitNewProcess(procConfig *ProcessConfig, autoStart bool) error {
+func (it *Integration) InitNewProcess(procConfig *ProcessConfig) error {
+
 	proc := NewProcess(procConfig)
 	it.processes = append(it.processes, proc)
-	err := proc.Init()
-	if err == nil {
-		log.Infof("Process ID=%d was initialized.", procConfig.ID)
-		if autoStart {
+	if procConfig.Autostart {
+		err := proc.Init()
+		if err == nil {
+			log.Infof("Process ID=%d was initialized.", procConfig.ID)
 			err := proc.Start()
 			if err != nil {
 				log.Errorf("Process ID=%d failed to start . Error : %s", procConfig, err)
 			}
+
+		} else {
+			log.Errorf("Initialization of Process ID=%d FAILED . Error : %s", procConfig.ID, err)
+			return err
 		}
-	} else {
-		log.Errorf("Initialization of Process ID=%d FAILED .", procConfig.ID)
-		return err
 	}
 	return nil
 }
 
 // AddProcess adds new process .
-func (it *Integration) AddProcess(procConfig ProcessConfig, autoStart bool) (IDt, error) {
+func (it *Integration) AddProcess(procConfig ProcessConfig) (IDt, error) {
+	defaultProc := it.GetDefaultIntegrConfig()
 	procConfig.ID = GetNewID(it.processConfigs)
+	if len(procConfig.Filters) == 0 {
+		procConfig.Filters = defaultProc[0].Filters
+	}
+	if len(procConfig.Selectors) == 0 {
+		procConfig.Selectors = defaultProc[0].Selectors
+	}
+	if len(procConfig.Measurements) == 0 {
+		procConfig.Measurements = defaultProc[0].Measurements
+	}
 	it.processConfigs = append(it.processConfigs, procConfig)
 	it.SaveConfigs()
-	return procConfig.ID, it.InitNewProcess(&procConfig, autoStart)
+	return procConfig.ID, it.InitNewProcess(&procConfig)
 }
 
 // RemoveProcess stops process , removes it from config file and removes instance .
@@ -257,7 +261,7 @@ func Boot(mainConfig *models.MainConfig, restHandler *echo.Echo) *Integration {
 	integr := Integration{Name: "influxdb", StoreLocation: mainConfig.StorageLocation}
 	integr.Init()
 	integr.LoadConfig()
-	integr.InitProcesses(true)
+	integr.InitProcesses()
 	if restHandler != nil {
 		restAPI := IntegrationAPIRestEndp{&integr, restHandler}
 		restAPI.SetupRoutes()

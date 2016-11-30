@@ -31,13 +31,14 @@ func NewProcess(config *ProcessConfig) *Process {
 	proc := Process{Config: config, transform: DefaultTransform}
 	proc.writeMutex = &sync.Mutex{}
 	proc.apiMutex = &sync.Mutex{}
+	proc.State = "LOADED"
 	return &proc
 }
 
 // Init doing the process bootrstrap .
 func (pr *Process) Init() error {
 	var err error
-	pr.State = "STOPPED"
+	pr.State = "INIT_FAILED"
 	log.Info("Initializing influx client.")
 	pr.influxC, err = influx.NewHTTPClient(influx.HTTPConfig{
 		Addr:     pr.Config.InfluxAddr, //"http://localhost:8086",
@@ -83,7 +84,7 @@ func (pr *Process) Init() error {
 	pr.mqttAdapter = adapters.NewMqttAdapter(pr.Config.MqttBrokerAddr, pr.Config.MqttClientID, pr.Config.MqttBrokerUsername, pr.Config.MqttBrokerPassword)
 	pr.mqttAdapter.SetMessageHandler(pr.OnMessage)
 	log.Info("MQTT adapter initialization completed.")
-
+	pr.State = "INITIALIZED"
 	return nil
 }
 
@@ -259,6 +260,12 @@ func (pr *Process) WriteIntoDb() {
 // Start starts the process by starting MQTT adapter ,
 // starting scheduler
 func (pr *Process) Start() error {
+	// try to initialize process first if current state is not INITIALIZED
+	if pr.State == "INIT_FAILED" || pr.State == "LOADED" {
+		if err := pr.Init(); err != nil {
+			return err
+		}
+	}
 	pr.ticker = time.NewTicker(time.Millisecond * pr.Config.SaveInterval)
 	go func() {
 		for _ = range pr.ticker.C {

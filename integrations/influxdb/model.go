@@ -82,6 +82,7 @@ type ProcessConfig struct {
 	Filters      []Filter
 	Selectors    []Selector
 	Measurements []Measurement
+	Autostart    bool
 }
 
 //ProcessConfigs is a collection of ProcessConfigs
