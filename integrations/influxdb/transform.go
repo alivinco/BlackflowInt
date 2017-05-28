@@ -2,62 +2,51 @@ package influxdb
 
 import (
 	"time"
-
-	iotmsg "github.com/alivinco/iotmsglibgo"
 	influx "github.com/influxdata/influxdb/client/v2"
+	"github.com/alivinco/fimpgo"
 )
 
 // DefaultTransform - transforms IotMsg into InfluxDb datapoint
-func DefaultTransform(context *MsgContext, topic string, iotMsg *iotmsg.IotMsg, domain string) (*influx.Point, error) {
-	var dpName string
+func DefaultTransform(context *MsgContext, topic string, iotMsg *fimpgo.FimpMessage, domain string) (*influx.Point, error) {
 	tags := map[string]string{
 		"topic":  topic,
 		"domain": domain,
-		"cls":    iotMsg.Class,
-		"subcls": iotMsg.SubClass,
-		"type":   MapIotMsgType(iotMsg.Type),
+		"mtype":    iotMsg.Type,
+		"serv": iotMsg.Service,
 	}
 	var fields map[string]interface{}
-	var vInt int
+	var vInt int64
 	var err error
-	switch iotMsg.Class {
-	case "sensor":
-		fields = map[string]interface{}{
-			"value": iotMsg.GetDefaultFloat(),
-			"unit":  iotMsg.Default.Unit,
+	switch iotMsg.Type {
+	case "evt.sensor.report","evt.meter.report":
+		val ,err := iotMsg.GetFloatValue()
+		if err != nil {
+			fields = map[string]interface{}{
+				"value": val,
+				"unit":  iotMsg.Properties["unit"],
+			}
 		}
-		dpName = "sensor"
-		break
-	case "binary":
-		fields = map[string]interface{}{
-			"value": iotMsg.GetDefaultBool(),
+
+	case "evt.binary.report","evt.presence.report","evt.open.report":
+		val ,err := iotMsg.GetBoolValue()
+		if err != nil {
+			fields = map[string]interface{}{
+				"value": val,
+			}
 		}
-		dpName = "binary"
-		break
-	case "level":
-		vInt, err = iotMsg.GetDefaultInt()
+
+	case "evt.lvl.report":
+		vInt, err = iotMsg.GetIntValue()
 		if err != nil {
 			return nil, err
 		}
 		fields = map[string]interface{}{
 			"value": vInt,
 		}
-		dpName = "level"
-		break
-	default:
-		fields = map[string]interface{}{
-			"value": iotMsg.GetDefaultStr(),
-		}
-		dpName = "default"
+
 	}
 	if fields != nil {
-		if context.MeasurementName == "" {
-			context.MeasurementName = dpName
-		} else {
-			dpName = context.MeasurementName
-		}
-		point, _ := influx.NewPoint(dpName, tags, fields, time.Now())
-
+		point, _ := influx.NewPoint(iotMsg.Service, tags, fields, time.Now())
 		return point, nil
 	}
 
@@ -65,12 +54,4 @@ func DefaultTransform(context *MsgContext, topic string, iotMsg *iotmsg.IotMsg, 
 
 }
 
-// MapIotMsgType maps int to string
-func MapIotMsgType(msgType iotmsg.IotMsgType) string {
-	typeMap := map[iotmsg.IotMsgType]string{
-		iotmsg.MsgTypeCmd: "cmd",
-		iotmsg.MsgTypeEvt: "evt",
-		iotmsg.MsgTypeGet: "get",
-	}
-	return typeMap[msgType]
-}
+

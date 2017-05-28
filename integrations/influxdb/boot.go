@@ -41,36 +41,59 @@ func (it *Integration) GetProcessByID(ID IDt) *Process {
 func (it *Integration) GetDefaultIntegrConfig() []ProcessConfig {
 
 	selector := []Selector{
-		Selector{ID: 1, Topic: "*/jim1/evt*"},
+		Selector{ID: 1, Topic: "*/j1/evt/*"},
 	}
 	filters := []Filter{
 		Filter{
 			ID:       1,
-			MsgClass: "sensor",
+			MsgType: "evt.sensor.report",
 			IsAtomic: true,
 		},
 		Filter{
 			ID:       2,
-			MsgClass: "binary",
+			MsgType: "evt.binary.report",
+			IsAtomic: true,
+		},
+		Filter{
+			ID:       3,
+			MsgType: "evt.meter.report",
+			IsAtomic: true,
+		},Filter{
+			ID:       4,
+			MsgType: "evt.open.report",
+			IsAtomic: true,
+		},Filter{
+			ID:       5,
+			MsgType: "evt.presence.report",
 			IsAtomic: true,
 		},
 	}
 
 	measurements := []Measurement{
 		Measurement{
-			Name: "sensor",
+			Name: "sensor_temp",
 			RetentionPolicyDuration: "8w",
-			RetentionPolicyName:     "bf_sensor",
+			RetentionPolicyName:     "bf_sensor_temp",
 		},
 		Measurement{
-			Name: "level",
+			Name: "sensor_lumin",
 			RetentionPolicyDuration: "8w",
-			RetentionPolicyName:     "bf_level",
+			RetentionPolicyName:     "bf_sensor_lumin",
 		},
 		Measurement{
-			Name: "binary",
+			Name: "sensor_presence",
 			RetentionPolicyDuration: "8w",
-			RetentionPolicyName:     "bf_binary",
+			RetentionPolicyName:     "bf_sensor_presence",
+		},
+		Measurement{
+			Name: "sensor_contact",
+			RetentionPolicyDuration: "8w",
+			RetentionPolicyName:     "sensor_contact",
+		},
+		Measurement{
+			Name: "meter_elec",
+			RetentionPolicyDuration: "8w",
+			RetentionPolicyName:     "bf_meter_elec",
 		},
 		Measurement{
 			Name: "default",
@@ -78,7 +101,6 @@ func (it *Integration) GetDefaultIntegrConfig() []ProcessConfig {
 			RetentionPolicyName:     "bf_default",
 		},
 	}
-
 	config := ProcessConfig{
 		ID:                 1,
 		MqttBrokerAddr:     "tcp://" + viper.GetString("mqtt_broker_addr"),

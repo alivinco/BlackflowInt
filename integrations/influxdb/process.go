@@ -6,15 +6,14 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/alivinco/blackflowint/adapters"
-	iotmsg "github.com/alivinco/iotmsglibgo"
 	influx "github.com/influxdata/influxdb/client/v2"
+	"github.com/alivinco/fimpgo"
 )
 
 // Process implements integration flow between messaging system and influxdb timeseries database.
 // It inserts events into db
 type Process struct {
-	mqttAdapter *adapters.MqttAdapter
+	mqttTransport *fimpgo.MqttTransport
 	influxC     influx.Client
 	Config      *ProcessConfig
 	batchPoints map[string]influx.BatchPoints
@@ -55,7 +54,7 @@ func (pr *Process) Init() error {
 	if response, err := pr.influxC.Query(q); err == nil && response.Error() == nil {
 		log.Infof("Database %s was created with status :%s", pr.Config.InfluxDB, response.Results)
 	} else {
-		pr.LastError = "InfluxDB is not reachable .Check connetion parameters."
+		pr.LastError = "InfluxDB is not reachable .Check connection parameters."
 		return err
 	}
 	// Setting up retention policies
@@ -66,7 +65,7 @@ func (pr *Process) Init() error {
 		}
 		q := influx.NewQuery(fmt.Sprintf("CREATE RETENTION POLICY %s ON %s DURATION %s REPLICATION 1", mes.RetentionPolicyName, pr.Config.InfluxDB, mes.RetentionPolicyDuration), pr.Config.InfluxDB, "")
 		if response, err := pr.influxC.Query(q); err == nil && response.Error() == nil {
-			log.Infof("Retencion policy %s was created with status :%s", mes.RetentionPolicyName, response.Results)
+			log.Infof("Retention policy %s was created with status :%s", mes.RetentionPolicyName, response.Results)
 		} else {
 			log.Errorf("Configuration of retention policy %s failed with status : %s ", mes.RetentionPolicyName, response.Error())
 		}
@@ -81,8 +80,8 @@ func (pr *Process) Init() error {
 	log.Info("DB initialization completed.")
 	log.Info("Initializing MQTT adapter.")
 	//"tcp://localhost:1883", "blackflowint", "", ""
-	pr.mqttAdapter = adapters.NewMqttAdapter(pr.Config.MqttBrokerAddr, pr.Config.MqttClientID, pr.Config.MqttBrokerUsername, pr.Config.MqttBrokerPassword)
-	pr.mqttAdapter.SetMessageHandler(pr.OnMessage)
+	pr.mqttTransport = fimpgo.NewMqttTransport(pr.Config.MqttBrokerAddr,pr.Config.MqttClientID,pr.Config.MqttBrokerUsername, pr.Config.MqttBrokerPassword,true,1,1)
+	pr.mqttTransport.SetMessageHandler(pr.OnMessage)
 	log.Info("MQTT adapter initialization completed.")
 	pr.State = "INITIALIZED"
 	return nil
@@ -90,11 +89,11 @@ func (pr *Process) Init() error {
 
 // OnMessage is invoked by an adapter on every new message
 // The code is executed in callers goroutine
-func (pr *Process) OnMessage(topic string, iotMsg *iotmsg.IotMsg, domain string) {
+func (pr *Process) OnMessage(topic string, addr *fimpgo.Address , iotMsg *fimpgo.FimpMessage) {
 	// log.Debugf("New msg of class = %s", iotMsg.Class
 	context := &MsgContext{}
-	if pr.filter(context, topic, iotMsg, domain, 0) {
-		msg, err := pr.transform(context, topic, iotMsg, domain)
+	if pr.filter(context, topic, iotMsg, addr.GlobalPrefix, 0) {
+		msg, err := pr.transform(context, topic, iotMsg, addr.GlobalPrefix)
 		if err != nil {
 			log.Errorf("Transformation error: %s", err)
 		} else {
@@ -111,7 +110,7 @@ func (pr *Process) OnMessage(topic string, iotMsg *iotmsg.IotMsg, domain string)
 }
 
 // Filter - transforms IotMsg into DB compatable struct
-func (pr *Process) filter(context *MsgContext, topic string, iotMsg *iotmsg.IotMsg, domain string, filterID IDt) bool {
+func (pr *Process) filter(context *MsgContext, topic string, iotMsg *fimpgo.FimpMessage, domain string, filterID IDt) bool {
 	var result bool
 	for i := range pr.Config.Filters {
 		if (pr.Config.Filters[i].IsAtomic && filterID == 0) || (pr.Config.Filters[i].ID == filterID) {
@@ -129,17 +128,12 @@ func (pr *Process) filter(context *MsgContext, topic string, iotMsg *iotmsg.IotM
 				}
 			}
 			if pr.Config.Filters[i].MsgType != "" {
-				if MapIotMsgType(iotMsg.Type) != pr.Config.Filters[i].MsgType {
+				if iotMsg.Type != pr.Config.Filters[i].MsgType {
 					result = false
 				}
 			}
-			if pr.Config.Filters[i].MsgClass != "" {
-				if iotMsg.Class != pr.Config.Filters[i].MsgClass {
-					result = false
-				}
-			}
-			if pr.Config.Filters[i].MsgSubClass != "" {
-				if iotMsg.SubClass != pr.Config.Filters[i].MsgSubClass {
+			if pr.Config.Filters[i].Service != "" {
+				if iotMsg.Service != pr.Config.Filters[i].Service {
 					result = false
 				}
 			}
@@ -272,13 +266,13 @@ func (pr *Process) Start() error {
 			pr.WriteIntoDb()
 		}
 	}()
-	err := pr.mqttAdapter.Start()
+	err := pr.mqttTransport.Start()
 	if err != nil {
 		log.Fatalln("Error: ", err)
 		return err
 	}
 	for _, selector := range pr.Config.Selectors {
-		pr.mqttAdapter.Subscribe(selector.Topic, 0)
+		pr.mqttTransport.Subscribe(selector.Topic)
 	}
 	pr.State = "RUNNING"
 	return nil
@@ -291,10 +285,10 @@ func (pr *Process) Stop() error {
 	pr.ticker.Stop()
 
 	for _, selector := range pr.Config.Selectors {
-		pr.mqttAdapter.Unsubscribe(selector.Topic)
+		pr.mqttTransport.Unsubscribe(selector.Topic)
 	}
 	pr.influxC.Close()
-	pr.mqttAdapter.Stop()
+	pr.mqttTransport.Stop()
 	pr.State = "STOPPED"
 	return nil
 }

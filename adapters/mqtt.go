@@ -4,8 +4,9 @@ import (
 	"strings"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/alivinco/iotmsglibgo"
 	MQTT "github.com/eclipse/paho.mqtt.golang"
+	"github.com/alivinco/fimpgo"
+	"github.com/alivinco/iotmsglibgo"
 )
 
 // MqttAdapter , mqtt adapter .
@@ -14,7 +15,7 @@ type MqttAdapter struct {
 	msgHandler MessageHandler
 }
 
-type MessageHandler func(topic string, iotMsg *iotmsglibgo.IotMsg, domain string)
+type MessageHandler func(topic string, iotMsg *fimpgo.FimpMessage, domain string)
 
 // NewMqttAdapter constructor
 //serverUri="tcp://localhost:1883"

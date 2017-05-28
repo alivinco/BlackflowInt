@@ -32,7 +32,7 @@ func (pr *Process) AddSelector(selector Selector) IDt {
 	pr.apiMutex.Lock()
 	selector.ID = GetNewID(pr.Config.Filters)
 	pr.Config.Selectors = append(pr.Config.Selectors, selector)
-	pr.mqttAdapter.Subscribe(selector.Topic, 0)
+	pr.mqttTransport.Subscribe(selector.Topic)
 	return selector.ID
 }
 
@@ -44,7 +44,7 @@ func (pr *Process) RemoveSelector(ID IDt) {
 	pr.apiMutex.Lock()
 	for i := range pr.Config.Selectors {
 		if pr.Config.Selectors[i].ID == ID {
-			pr.mqttAdapter.Unsubscribe(pr.Config.Selectors[i].Topic)
+			pr.mqttTransport.Unsubscribe(pr.Config.Selectors[i].Topic)
 			pr.Config.Selectors = append(pr.Config.Selectors[:i], pr.Config.Selectors[i+1:]...)
 		}
 	}

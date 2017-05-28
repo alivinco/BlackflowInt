@@ -5,12 +5,12 @@ import (
 
 	"reflect"
 
-	"github.com/alivinco/iotmsglibgo"
 	influx "github.com/influxdata/influxdb/client/v2"
+	"github.com/alivinco/fimpgo"
 )
 
 // Transform defines function which converts IotMsg into influx data point
-type Transform func(context *MsgContext, topic string, iotMsg *iotmsglibgo.IotMsg, domain string) (*influx.Point, error)
+type Transform func(context *MsgContext, topic string, iotMsg *fimpgo.FimpMessage, domain string) (*influx.Point, error)
 
 // IDt defines type of struct ID
 type IDt int
@@ -35,10 +35,9 @@ type Filter struct {
 	Name        string
 	Topic       string
 	Domain      string
+	Service    string
 	MsgType     string
-	MsgClass    string
-	MsgSubClass string
-	// If true then returns everythin except matching value
+	// If true then returns everything but matching value
 	Negation bool
 	// Boolean operation between 2 filters , supported values : and , or
 	LinkedFilterBooleanOperation string

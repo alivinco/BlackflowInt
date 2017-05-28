@@ -135,7 +135,10 @@ func JWTWithConfig(config JWTConfig) echo.MiddlewareFunc {
 			token := new(jwt.Token)
 			// Issue #647, #656
 			if _, ok := config.Claims.(jwt.MapClaims); ok {
+				fmt.Println("Parsing token")
 				token, err = jwt.Parse(auth, config.keyFunc)
+				fmt.Println("Token parsed")
+				fmt.Println(err)
 			} else {
 				claims := reflect.ValueOf(config.Claims).Interface().(jwt.Claims)
 				token, err = jwt.ParseWithClaims(auth, claims, config.keyFunc)

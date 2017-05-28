@@ -74,7 +74,8 @@
                 "RetentionPolicyName": "bf_default",
                 "RetentionPolicyDuration": "8w"
             }
-        ]
+        ],
+        "Autostart": false
     },
     {
         "ID": 2,
@@ -151,6 +152,163 @@
                 "RetentionPolicyName": "bf_default",
                 "RetentionPolicyDuration": "8w"
             }
-        ]
+        ],
+        "Autostart": true
+    },
+    {
+        "ID": 3,
+        "Name": "New project",
+        "MqttBrokerAddr": "tcp://localhost:1883",
+        "MqttClientID": "bf-env-test-3",
+        "MqttBrokerUsername": "",
+        "MqttBrokerPassword": "",
+        "InfluxAddr": "http://localhost:8086",
+        "InfluxUsername": "",
+        "InfluxPassword": "",
+        "InfluxDB": "iotmsg_test",
+        "BatchMaxSize": 1000,
+        "SaveInterval": 1000,
+        "Filters": [
+            {
+                "ID": 1,
+                "Name": "",
+                "Topic": "",
+                "Domain": "",
+                "MsgType": "",
+                "MsgClass": "sensor",
+                "MsgSubClass": "",
+                "Negation": false,
+                "LinkedFilterBooleanOperation": "",
+                "LinkedFilterID": 0,
+                "IsAtomic": true,
+                "Tags": null,
+                "MeasurementName": "",
+                "InMemory": false
+            },
+            {
+                "ID": 2,
+                "Name": "",
+                "Topic": "",
+                "Domain": "",
+                "MsgType": "",
+                "MsgClass": "binary",
+                "MsgSubClass": "",
+                "Negation": false,
+                "LinkedFilterBooleanOperation": "",
+                "LinkedFilterID": 0,
+                "IsAtomic": true,
+                "Tags": null,
+                "MeasurementName": "",
+                "InMemory": false
+            }
+        ],
+        "Selectors": [
+            {
+                "ID": 1,
+                "Topic": "*/jim1/evt*",
+                "InMemory": false
+            }
+        ],
+        "Measurements": [
+            {
+                "Name": "sensor",
+                "RetentionPolicyName": "bf_sensor",
+                "RetentionPolicyDuration": "8w"
+            },
+            {
+                "Name": "level",
+                "RetentionPolicyName": "bf_level",
+                "RetentionPolicyDuration": "8w"
+            },
+            {
+                "Name": "binary",
+                "RetentionPolicyName": "bf_binary",
+                "RetentionPolicyDuration": "8w"
+            },
+            {
+                "Name": "default",
+                "RetentionPolicyName": "bf_default",
+                "RetentionPolicyDuration": "8w"
+            }
+        ],
+        "Autostart": false
+    },
+    {
+        "ID": 4,
+        "Name": "New project",
+        "MqttBrokerAddr": "tcp://localhost:1883",
+        "MqttClientID": "bf-env-test-4",
+        "MqttBrokerUsername": "",
+        "MqttBrokerPassword": "",
+        "InfluxAddr": "http://localhost:8086",
+        "InfluxUsername": "",
+        "InfluxPassword": "",
+        "InfluxDB": "iotmsg_test",
+        "BatchMaxSize": 1000,
+        "SaveInterval": 1000,
+        "Filters": [
+            {
+                "ID": 1,
+                "Name": "",
+                "Topic": "",
+                "Domain": "",
+                "MsgType": "",
+                "MsgClass": "sensor",
+                "MsgSubClass": "",
+                "Negation": false,
+                "LinkedFilterBooleanOperation": "",
+                "LinkedFilterID": 0,
+                "IsAtomic": true,
+                "Tags": null,
+                "MeasurementName": "",
+                "InMemory": false
+            },
+            {
+                "ID": 2,
+                "Name": "",
+                "Topic": "",
+                "Domain": "",
+                "MsgType": "",
+                "MsgClass": "binary",
+                "MsgSubClass": "",
+                "Negation": false,
+                "LinkedFilterBooleanOperation": "",
+                "LinkedFilterID": 0,
+                "IsAtomic": true,
+                "Tags": null,
+                "MeasurementName": "",
+                "InMemory": false
+            }
+        ],
+        "Selectors": [
+            {
+                "ID": 1,
+                "Topic": "*/jim1/evt*",
+                "InMemory": false
+            }
+        ],
+        "Measurements": [
+            {
+                "Name": "sensor",
+                "RetentionPolicyName": "bf_sensor",
+                "RetentionPolicyDuration": "8w"
+            },
+            {
+                "Name": "level",
+                "RetentionPolicyName": "bf_level",
+                "RetentionPolicyDuration": "8w"
+            },
+            {
+                "Name": "binary",
+                "RetentionPolicyName": "bf_binary",
+                "RetentionPolicyDuration": "8w"
+            },
+            {
+                "Name": "default",
+                "RetentionPolicyName": "bf_default",
+                "RetentionPolicyDuration": "8w"
+            }
+        ],
+        "Autostart": false
     }
 ]

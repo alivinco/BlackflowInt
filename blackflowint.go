@@ -9,6 +9,8 @@ import (
 	"github.com/alivinco/blackflowint/models"
 	"github.com/labstack/echo"
 	"github.com/spf13/viper"
+
+	"github.com/alivinco/blackflowint/integrations/restmqttproxy"
 )
 
 var conf models.MainConfig
@@ -66,6 +68,7 @@ func main() {
 	adminRestHandler := echo.New()
 
 	influxdb.Boot(&conf, adminRestHandler)
+	restmqttproxy.Boot(&conf,adminRestHandler)
 
 	adminRestHandler.Logger.Fatal(adminRestHandler.Start(conf.AdminRestAPIBindAddres))
 

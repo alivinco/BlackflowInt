@@ -19,8 +19,8 @@ build :
 
 
 docker-clean:
-	docker rm blacktower
-	docker rmi alivinco/blacktower
+	docker rm blackflowint
+	docker rmi alivinco/blackflowint
 
 .PHONY : dist-docker
 
