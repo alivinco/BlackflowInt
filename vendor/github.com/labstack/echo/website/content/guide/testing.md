@@ -4,7 +4,6 @@ description = "Testing handler and middleware in Echo"
 [menu.main]
   name = "Testing"
   parent = "guide"
-  weight = 9
 +++
 
 ## Testing Handler
@@ -80,7 +79,6 @@ import (
 	"testing"
 
 	"github.com/labstack/echo"
-	"github.com/labstack/echo/engine/standard"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -156,4 +154,4 @@ req, err := http.NewRequest(echo.POST, "/?"+q.Encode(), nil)
 
 *TBD*
 
-You can looking to built-in middleware [test cases](https://github.com/labstack/echo/tree/master/middleware).
+For now you can look into built-in middleware [test cases](https://github.com/labstack/echo/tree/master/middleware).

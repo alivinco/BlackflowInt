@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/alivinco/blackflowint/integrations/restmqttproxy"
+	"strings"
 )
 
 var conf models.MainConfig
@@ -46,9 +47,10 @@ func ConfigureApp() {
 			log.Fatalf("unable to decode into struct, %v", err)
 		}
 	} else {
-		conf.AdminRestAPIBindAddres = viper.GetString("AdminRestAPIBindAddres")
-		conf.StorageLocation = viper.GetString("StorageLocation")
-		conf.LogLevel = viper.GetString("LogLevel")
+		conf.AdminRestAPIBindAddres = viper.GetString("int_AdminRestAPIBindAddres")
+		conf.StorageLocation = viper.GetString("int_StorageLocation")
+		conf.LogLevel = viper.GetString("int_LogLevel")
+		conf.ActiveIntegrations = strings.Split(viper.GetString("int_active_integrations"),",")
 	}
 
 	log.Infof("Starting app using config parameters : %+v", conf)
@@ -66,10 +68,16 @@ func main() {
 	ConfigureApp()
 	SetupLog()
 	adminRestHandler := echo.New()
-
-	influxdb.Boot(&conf, adminRestHandler)
-	restmqttproxy.Boot(&conf,adminRestHandler)
-
+	for _,integrName := range conf.ActiveIntegrations {
+		switch integrName {
+		case "influxdb":
+			log.Info("Loading influxdb integration")
+			influxdb.Boot(&conf, adminRestHandler)
+		case "restmqttproxy" :
+			log.Info("Loading restmqttproxy integration")
+			restmqttproxy.Boot(&conf,adminRestHandler)
+		}
+	}
 	adminRestHandler.Logger.Fatal(adminRestHandler.Start(conf.AdminRestAPIBindAddres))
 
 }

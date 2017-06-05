@@ -4,6 +4,10 @@ package restmqttproxy
 // IDt defines type of struct ID
 type IDt int
 
+type UserSettings struct {
+	Name string
+	ActiveDomain string
+}
 
 // ProcessConfig process configuration
 type ProcessConfig struct {
@@ -14,6 +18,15 @@ type ProcessConfig struct {
 	MqttBrokerUsername string
 	MqttBrokerPassword string
 	ProxyBindHost      string
-	ProxyBindPort      string
 	Autostart    bool
+	UserSettings []UserSettings
+	ClientSecret 	   string
+	SkipDomain	   bool
+
+}
+
+type RunningRequest struct {
+	RespTopic string
+	RespMsgType string
+	ResponseChan chan []byte
 }

@@ -14,9 +14,10 @@ blackflowint -c ./
 ``` 
 
 Supported ENV variables : 
-- ZM_LOGLEVEL="info"
-- ZM_STORAGELOCATION="/var/lib/blackflowint"
-- ZM_ADMINRESTAPIBINDADDRES=":5015"
+- ZM_INT_LOGLEVEL="info"
+- ZM_INT_STORAGELOCATION="/var/lib/blackflowint"
+- ZM_INT_ADMINRESTAPIBINDADDRES=":5015"
+- ZM_INT_ACTIVE_INTEGRATIONS="influxdb,restmqttproxy"
 
 
 ```
@@ -25,6 +26,7 @@ type MainConfig struct {
 	AdminRestAPIBindAddres string
 	LogPath                string
 	LogPath                string
+	ActiveIntegrations     []string 
 }
 
 ```
@@ -34,7 +36,10 @@ type MainConfig struct {
 #### Integrations : 
 
 - [MQTT event stream dump into InfluxDB](Integrations/influxdb/README.md) 
+- [Rest MQTT proxy](Integrations/restmqttproxy/README.md) 
 
 #### Docker 
 
-- start container : docker run --name blackflowint -d -p 5016:5015 --link influxdb alivinco/blackflowint
+- start container in Blacktower : docker run --name blackflowint -d -p 5016:5015 --link influxdb alivinco/blackflowint
+
+

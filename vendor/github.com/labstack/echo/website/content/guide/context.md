@@ -3,9 +3,7 @@ title = "Context"
 description = "Context in Echo"
 [menu.main]
   name = "Context"
-  identifier = "context"
   parent = "guide"
-  weight = 5
 +++
 
 `echo.Context` represents the context of the current HTTP request. It holds request and

@@ -1,18 +1,24 @@
-hash: cc594b1cbab38c791496b74d63b8b02a0a26423c9c438e296ac0e5d4ac809b0b
-updated: 2016-11-24T11:41:18.37294675+01:00
+hash: ae1fecf0cbec8b8f3479180ac38c4fed031f979e3ebd5631f32047bf25d2b20b
+updated: 2017-06-05T13:39:19.772849086+02:00
 imports:
+- name: github.com/alivinco/fimpgo
+  version: cb433bfdda3f193df2e6cba449dc69a3860747a3
 - name: github.com/alivinco/iotmsglibgo
   version: ea3086694b54a1f611779f96f3fba3d6644cf89b
   subpackages:
   - json-types
+- name: github.com/buger/jsonparser
+  version: bb14bb6c38f6cf1706ef55278891d184b6a51b0e
+- name: github.com/dgrijalva/jwt-go
+  version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
 - name: github.com/eclipse/paho.mqtt.golang
   version: 45f9b18f4864c81d49c3ed01e5faec9eeb05de31
   subpackages:
   - packets
 - name: github.com/fsnotify/fsnotify
-  version: fd9ec7deca8bf46ecd2a795baaacf2b3a9be1197
+  version: 4da3e2cfbabc9f751898f250b49f2439785783a1
 - name: github.com/hashicorp/hcl
-  version: 7cb7455c285ca3bf3362aa4ba6a06a6d6f5c3ba0
+  version: 392dba7d905ed5d04a5794ba89f558b27e2ba1ca
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -29,57 +35,48 @@ imports:
   - models
   - pkg/escape
 - name: github.com/labstack/echo
-  version: cd2530ea098106338b888f4fb66e966efa2fd75e
+  version: 1049c9613cd371b7ea8f219404c9a821734781ed
+  subpackages:
+  - middleware
 - name: github.com/labstack/gommon
   version: 9a43ff0d261e0e65594422e9eee08cf301aabbe7
   subpackages:
+  - bytes
   - color
   - log
+  - random
 - name: github.com/magiconair/properties
-  version: 0723e352fa358f9322c938cc2dadda874e9151a9
+  version: 51463bfca2576e06c62a8504b5c0f06d61312647
 - name: github.com/mattn/go-colorable
   version: d228849504861217f796da67fae4f6e347643f15
 - name: github.com/mattn/go-isatty
   version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
-- name: github.com/miekg/dns
-  version: 271c58e0c14f552178ea321a545ff9af38930f39
 - name: github.com/mitchellh/mapstructure
-  version: f3009df150dadf309fdee4a54ed65c124afad715
+  version: d0303fe809921458f417bcf828397a65db30a7e4
 - name: github.com/pelletier/go-buffruneio
-  version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
+  version: c37440a7cf42ac63b919c752ca73a85067e05992
 - name: github.com/pelletier/go-toml
-  version: 7cb988051d5045890cb91402a0b5fddc76c627bc
-- name: github.com/rsc/letsencrypt
-  version: 76104d26167d38b6a0010f42bfc8ec5487742e8b
+  version: fe7536c3dee2596cdd23ee9976a17c22bdaae286
+- name: github.com/pkg/errors
+  version: c605e284fe17294bda444b34710735b29d1a9d90
 - name: github.com/satori/go.uuid
   version: b061729afc07e77a8aa4fad0a2fd840958f1942a
 - name: github.com/Sirupsen/logrus
   version: d26492970760ca5d33129d2d799e34be5c4782eb
 - name: github.com/spf13/afero
-  version: 06b7e5f50606ecd49148a01a6008942d9b669217
+  version: 9be650865eab0c12963d8753212f4f9c66cdcf12
   subpackages:
   - mem
 - name: github.com/spf13/cast
-  version: 24b6558033ffe202bf42f0f3b870dcc798dd2ba8
+  version: acbeb36b902d72a7a4c18e8f3241075e7ab763e4
 - name: github.com/spf13/jwalterweatherman
-  version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
+  version: 0efa5202c04663c757d84f90f5219c1250baf94f
 - name: github.com/spf13/pflag
-  version: 5ccb023bc27df288a957c5e994cd44fd19619465
+  version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
 - name: github.com/spf13/viper
   version: 651d9d916abc3c3d6a91a12549495caba5edffd2
-- name: github.com/tylerb/graceful
-  version: 4df1190835320af7076dfcf27b3d071fd3612caf
 - name: github.com/valyala/fasttemplate
   version: 3b874956e03f1636d171bda64b130f9135f42cff
-- name: github.com/xenolf/lego
-  version: 0abbd738a45af51595a214c52b02b18d16974f19
-  subpackages:
-  - acme
-- name: gopkg.in/square/go-jose.v1
-  version: aa2e30fdd1fe9dd3394119af66451ae790d50e0d
-  subpackages:
-  - cipher
-  - json
 - name: gopkg.in/yaml.v2
-  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
+  version: cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b
 testImports: []

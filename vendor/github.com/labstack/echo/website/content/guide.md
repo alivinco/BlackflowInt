@@ -1,6 +1,6 @@
 +++
 title = "Guide"
-description = "Guide"
+description = "Echo guide"
 type = "guide"
 [menu.main]
   name = "Guide"
@@ -172,13 +172,14 @@ ls avatar.png
 
 ### Handling Request
 
-- Bind `JSON` or `XML` or `form` payload into Go struct based on `Content-Type` request header.
-- Render response as `JSON` or `XML` with status code.
+- Bind `json`, `xml`, `form` or `query` payload into Go struct based on `Content-Type`
+request header.
+- Render response as `json` or `xml` with status code.
 
 ```go
 type User struct {
-	Name  string `json:"name" xml:"name" form:"name"`
-	Email string `json:"email" xml:"email" form:"email"`
+	Name  string `json:"name" xml:"name" form:"name" query:"name"`
+	Email string `json:"email" xml:"email" form:"email" query:"name"`
 }
 
 e.POST("/users", func(c echo.Context) error {
@@ -200,9 +201,9 @@ Server any file from static directory for path `/static/*`.
 e.Static("/static", "static")
 ```
 
-##### [Learn More](https://echo.labstack.com/guide/static-files)
+#### [Learn More](/guide/static-files)
 
-### [Template Rendering](https://echo.labstack.com/guide/templates)
+### [Template Rendering](/guide/templates)
 
 ### Middleware
 
@@ -213,11 +214,11 @@ e.Use(middleware.Recover())
 
 // Group level middleware
 g := e.Group("/admin")
-g.Use(middleware.BasicAuth(func(username, password string) bool {
-	if username == "joe" && password == "secret" {
-		return true
-	}
-	return false
+g.Use(middleware.BasicAuth(func(username, password string, c echo.Context) (error, bool) {
+  if username == "joe" && password == "secret" {
+    return nil, true
+  }
+  return nil, false
 }))
 
 // Route level middleware
@@ -231,3 +232,5 @@ e.GET("/users", func(c echo.Context) error {
 	return c.String(http.StatusOK, "/users")
 }, track)
 ```
+
+#### [Learn More](/middleware)

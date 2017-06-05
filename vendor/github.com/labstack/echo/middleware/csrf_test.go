@@ -14,7 +14,7 @@ import (
 
 func TestCSRF(t *testing.T) {
 	e := echo.New()
-	req, _ := http.NewRequest(echo.GET, "/", nil)
+	req := httptest.NewRequest(echo.GET, "/", nil)
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 	csrf := CSRFWithConfig(CSRFConfig{
@@ -54,14 +54,14 @@ func TestCSRFTokenFromForm(t *testing.T) {
 	f := make(url.Values)
 	f.Set("csrf", "token")
 	e := echo.New()
-	req, _ := http.NewRequest(echo.POST, "/", strings.NewReader(f.Encode()))
+	req := httptest.NewRequest(echo.POST, "/", strings.NewReader(f.Encode()))
 	req.Header.Add(echo.HeaderContentType, echo.MIMEApplicationForm)
 	c := e.NewContext(req, nil)
 	token, err := csrfTokenFromForm("csrf")(c)
 	if assert.NoError(t, err) {
 		assert.Equal(t, "token", token)
 	}
-	token, err = csrfTokenFromForm("invalid")(c)
+	_, err = csrfTokenFromForm("invalid")(c)
 	assert.Error(t, err)
 }
 
@@ -69,14 +69,14 @@ func TestCSRFTokenFromQuery(t *testing.T) {
 	q := make(url.Values)
 	q.Set("csrf", "token")
 	e := echo.New()
-	req, _ := http.NewRequest(echo.GET, "/?"+q.Encode(), nil)
+	req := httptest.NewRequest(echo.GET, "/?"+q.Encode(), nil)
 	req.Header.Add(echo.HeaderContentType, echo.MIMEApplicationForm)
 	c := e.NewContext(req, nil)
 	token, err := csrfTokenFromQuery("csrf")(c)
 	if assert.NoError(t, err) {
 		assert.Equal(t, "token", token)
 	}
-	token, err = csrfTokenFromQuery("invalid")(c)
+	_, err = csrfTokenFromQuery("invalid")(c)
 	assert.Error(t, err)
 	csrfTokenFromQuery("csrf")
 }

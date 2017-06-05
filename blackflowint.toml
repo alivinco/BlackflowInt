@@ -1,3 +1,4 @@
 StorageLocation = "./"
 AdminRestAPIBindAddres = ":5015"
-LogLevel = "info"
+LogLevel = "debug"
+ActiveIntegrations = ["restmqttproxy"]

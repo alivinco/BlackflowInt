@@ -18,7 +18,7 @@ func TestMethodOverride(t *testing.T) {
 	}
 
 	// Override with http header
-	req, _ := http.NewRequest(echo.POST, "/", nil)
+	req := httptest.NewRequest(echo.POST, "/", nil)
 	rec := httptest.NewRecorder()
 	req.Header.Set(echo.HeaderXHTTPMethodOverride, echo.DELETE)
 	c := e.NewContext(req, rec)
@@ -34,7 +34,7 @@ func TestMethodOverride(t *testing.T) {
 	m(h)(c)
 	assert.Equal(t, echo.DELETE, req.Method)
 
-	// Override with query paramter
+	// Override with query parameter
 	m = MethodOverrideWithConfig(MethodOverrideConfig{Getter: MethodFromQuery("_method")})
 	req, _ = http.NewRequest(echo.POST, "/?_method="+echo.DELETE, nil)
 	rec = httptest.NewRecorder()

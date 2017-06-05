@@ -1,13 +1,12 @@
 +++
-title = "MethodOverride Middleware"
+title = "Method Override Middleware"
 description = "Method override middleware for Echo"
 [menu.main]
-  name = "MethodOverride"
+  name = "Method Override"
   parent = "middleware"
-  weight = 5
 +++
 
-MethodOverride middleware checks for the overridden method from the request and
+Method override middleware checks for the overridden method from the request and
 uses it instead of the original method.
 
 For security reasons, only `POST` method can be overridden.
@@ -44,7 +43,7 @@ MethodOverrideConfig struct {
 
 ```go
 DefaultMethodOverrideConfig = MethodOverrideConfig{
-  Skipper: defaultSkipper,
+  Skipper: DefaultSkipper,
   Getter:  MethodFromHeader(echo.HeaderXHTTPMethodOverride),
 }
 ```

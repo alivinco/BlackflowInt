@@ -6,4 +6,5 @@ type MainConfig struct {
 	AdminRestAPIBindAddres string
 	LogLevel               string
 	LogPath                string
+	ActiveIntegrations     []string
 }

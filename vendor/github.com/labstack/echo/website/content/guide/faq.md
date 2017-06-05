@@ -4,7 +4,6 @@ description = "Frequently asked questions in Echo"
 [menu.main]
   name = "FAQ"
   parent = "guide"
-  weight = 20
 +++
 
 Q: How to retrieve `*http.Request` and `http.ResponseWriter` from `echo.Context`?
@@ -51,3 +50,30 @@ Q: How to run Echo on a specific IP address?
 ```go
 e.Start("<ip>:<port>")
 ```
+
+Q: How to run Echo on a random port?
+
+```go
+e.Start(":0")
+```
+
+Q: How to run Echo on a unix domain socket?
+
+```go
+e := echo.New()
+e.GET("/", func(c echo.Context) error {
+  return c.String(http.StatusOK, "OK")
+})
+os.Remove("/tmp/echo.sock")
+l, err := net.Listen("unix", "/tmp/echo.sock")
+if err != nil {
+  e.Logger.Fatal(err)
+}
+e.Listener = l
+e.Logger.Fatal(e.Start(""))
+```
+
+```sh
+curl --unix-socket /tmp/echo.sock http://localhost
+```
+
